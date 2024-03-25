@@ -1,0 +1,45 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PanelsManager : MonoBehaviour
+{
+    public static PanelsManager i;
+
+    public GameObject[] panels;
+    
+    private void Awake()
+    {
+       i = this;
+    }
+
+    public void Start()
+    {
+        SelectPanel(panels[0].name, true);
+    }
+    
+
+    public void SelectPanel(string name, bool immediate)
+    {
+        foreach (GameObject panel in panels)
+        {
+            if (panel.name == name)
+            {
+                ShowPanel(panel, immediate);
+            }
+            else
+            {
+                HidePanel(panel, immediate);
+            }
+        }
+    }
+
+    private void HidePanel(GameObject panel, bool immediate)
+    {
+        panel.SetActive(false);
+    }
+
+    private void ShowPanel(GameObject panel, bool immediate)
+    {
+        panel.SetActive(true);
+    }
+}
