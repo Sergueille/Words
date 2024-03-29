@@ -38,7 +38,7 @@ public static class Word
 }
 
 
-public struct Letter 
+public class Letter 
 {
     public char letter;
     public int level;

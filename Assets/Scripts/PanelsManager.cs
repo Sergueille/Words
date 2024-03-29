@@ -9,14 +9,9 @@ public class PanelsManager : MonoBehaviour
     
     private void Awake()
     {
-       i = this;
-    }
-
-    public void Start()
-    {
+        i = this;
         SelectPanel(panels[0].name, true);
     }
-    
 
     public void SelectPanel(string name, bool immediate)
     {

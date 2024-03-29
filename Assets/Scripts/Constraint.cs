@@ -77,25 +77,20 @@ public struct Constraint
     {
         if (type == ContraintType.Contains)
         {
-            return $"Must contain {DecorateArgument(stringArg)}";
+            return $"Must contain {Util.DecorateArgument(stringArg)}";
         }
         else if (type == ContraintType.StatsWith)
         {
-            return $"Must start with {DecorateArgument(stringArg)}";
+            return $"Must start with {Util.DecorateArgument(stringArg)}";
         }
         else if (type == ContraintType.EndsWith)
         {
-            return $"Must end with {DecorateArgument(stringArg)}";
+            return $"Must end with {Util.DecorateArgument(stringArg)}";
         }
         else if (type == ContraintType.HasLength)
         {
-            return $"Must be exactly {DecorateArgument(intArg)} letters long";
+            return $"Must be exactly {Util.DecorateArgument(intArg)} letters long";
         }
         else throw new System.Exception("Branch missing!");
-    }
-
-    private static string DecorateArgument<T>(T arg)
-    {
-        return $"<color=#555><size=130>{arg}</size></color>";
     }
 }

@@ -8,12 +8,16 @@ public class GameManager : MonoBehaviour
     
     public int minWordLength = 3;
     public int maxWordLength = 12;
+    public int wordsPerLevel = 3;
+    public int maxBonus = 4;
     
     public float scoreExpMultiplier = 20.0f;
     public float scoreExpSpeed = 0.15f;
 
     public Transform inputParent;
     public GameObject inputLetterPrefab;
+
+    [System.NonSerialized] public List<Bonus> bonuses;
 
     private Letter[] letters;
 
@@ -22,6 +26,9 @@ public class GameManager : MonoBehaviour
     private int totalScore;
     private Constraint currentConstraint;
     private int currentLevel;
+    private int levelWords = 0;
+
+    private int lastCurrentScore = -1;
 
 
     public TextMeshProUGUI errorText;
@@ -29,6 +36,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI totalScoreText;
     public TextMeshProUGUI targetScoreText;
     public TextMeshProUGUI constraintText;
+    public DotCounter wordsCounter;
 
     
     private void Awake()
@@ -44,13 +52,14 @@ public class GameManager : MonoBehaviour
         }
 
         inputWord = "";
+
+        bonuses = new List<Bonus>();
     }
 
     private void Start() 
     {
         Word.Init();
         HideError(true);
-        UpdateTotalScoreText(true);
 
         currentLevel = -1;
         StartLevel();
@@ -58,18 +67,27 @@ public class GameManager : MonoBehaviour
 
     private void LevelCompleted()
     {
-        ImprovementManager.i.Do(() => {
+        System.Action onFinished = () => {
             PanelsManager.i.SelectPanel("Main", false);
             StartLevel();
-        });
+        };
+
+        if (currentLevel % 2 == 0) {
+            BonusManager.i.Do(onFinished);
+        }
+        else {
+            ImprovementManager.i.Do(onFinished);
+        }
+
     }
 
     private void StartLevel()
     {
         currentLevel++;
-        totalScore = 0;
+        levelWords = 0;
+        wordsCounter.SetValue(1);
         ChangeConstraint();
-        UpdateTotalScoreText(false);
+        UpdateTotalScore(0, false);
         UpdateTargetScoreText(false);
     } 
 
@@ -93,6 +111,26 @@ public class GameManager : MonoBehaviour
         }
 
         UpdateCurrentScoreText(currentScore);
+
+        // Record keys on computer
+        if (Input.anyKeyDown)
+        {
+            foreach(char c in Input.inputString)
+            {
+                if (c >= 'a' && c <= 'z')
+                    InputLetter(c);
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Backspace))
+        {
+            EraseLastLetter();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            SubmitWord();
+        }
     }
 
 
@@ -135,29 +173,61 @@ public class GameManager : MonoBehaviour
             if (CheckIfWordAllowed())
             {
                 int score = ComputeWordScore();
-                totalScore += score;
-
-                UpdateTotalScoreText(false);
+                
+                UpdateTotalScore(totalScore + score, false);
                 UpdateCurrentScoreText(0);
                 ClearInput();
-                ChangeConstraint();
 
                 if (totalScore >= GetLevelTargetScore())
                 {
                     yield return new WaitForSeconds(0.5f);
-                    StartLevel();
+                    LevelCompleted();
+                    yield break;
                 }
+                else if (levelWords >= wordsPerLevel)
+                {
+                    // TODO: game over!
+                    Debug.Log("Game Over!");
+                }
+                
+                levelWords++;
+                wordsCounter.SetValue(levelWords + 1);
+                ChangeConstraint();
             }
         }
     }
 
     private void UpdateCurrentScoreText(int currentScore) 
     {
-        currentScoreText.text = $"+{currentScore}";
+        if (lastCurrentScore == currentScore)
+            return;
+
+        if (currentScore == 0)
+        {
+            LeanTween.scale(currentScoreText.gameObject, Vector3.zero, 0.2f).setEaseOutQuad();
+        }
+        else
+        {
+            LeanTween.scale(currentScoreText.gameObject, Vector3.one, 0.2f).setEaseOutQuad();
+
+            Util.LeanTweenShake(currentScoreText.gameObject, 15.0f, 0.5f);
+            currentScoreText.text = $"+{currentScore}";
+        }
+
+        lastCurrentScore = currentScore;
     }
 
-    private void UpdateTotalScoreText(bool immediate) 
+    private void UpdateTotalScore(int newValue, bool immediate) 
     {
+        if (totalScore == newValue) return;
+
+        totalScore = newValue;
+
+        if (!immediate)
+        {
+            Util.LeanTweenShake(totalScoreText.gameObject, 20, 0.4f);
+        }
+
         totalScoreText.text = totalScore.ToString();
     }
 

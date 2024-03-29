@@ -13,6 +13,8 @@ public class Keyboard : MonoBehaviour
 
     public string[] lines;
 
+    private Key[] keys;
+
 
     private void Awake()
     {
@@ -21,6 +23,10 @@ public class Keyboard : MonoBehaviour
 
     private void Start() 
     {
+        keys = new Key[26];
+
+        int keyID = 0;
+
         // Instantiate keys
         for (int i = 0; i < lines.Length; i++)
         {
@@ -37,12 +43,24 @@ public class Keyboard : MonoBehaviour
                 Key key = Instantiate(keyPrefab, lineObject.transform).gameObject.GetComponent<Key>();
                 key.letter = c;
                 key.onPress = letter => { GameManager.i.InputLetter(letter); };
-                key.UpdateTexts();
+                key.UpdateUI();
+
+                keys[keyID] = key;
+
+                keyID++;
             }
 
             if (i == lines.Length - 1) {
                 Instantiate(submitPrefab, lineObject.transform);
             }
+        }
+    }
+
+    public void UpdateAllKeys()
+    {
+        foreach (Key key in keys)
+        {
+            key.UpdateUI();
         }
     }
 

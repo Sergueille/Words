@@ -15,7 +15,7 @@ public class Key : MonoBehaviour
 
     public System.Action<char> onPress;
 
-    public void UpdateTexts() {
+    public void UpdateUI() {
         letterText.text = letter.ToString();
         levelText.text = Letter.level.ToString();
     }
