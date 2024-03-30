@@ -8,10 +8,27 @@ public class Bonus : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI nameText;
 
+    public System.Action popupAction;
+    public string popupActionText;
+
+    private bool isOscillating = false; 
+
     public void Init()
     {
         info = GetRandomBonus();
         nameText.text = info.name;
+    }
+
+    private void Update()
+    {
+        if (isOscillating)
+        {
+            transform.eulerAngles = new Vector3(0, 0, Mathf.Sin(Time.time * 15.0f) * 4);
+        }
+        else
+        {
+            transform.eulerAngles = new Vector3(0, 0, 0);
+        }
     }
 
     public static BonusInfo GetRandomBonus() 
@@ -26,14 +43,14 @@ public class Bonus : MonoBehaviour
 
                     return new BonusInfo {
                         name = "The pair",
-                        description = $"If the word contains {Util.DecorateArgument(pair)}, improves these letters",
+                        description = $"If the word contains {Util.DecorateArgument(pair)}, improves these letters by two levels",
                         onScore = (word) => {
                             if (word.Contains(pair))
                             {
                                 return new BonusAction {
                                     isAffected = true,
                                     score = 0,
-                                    lettersToImprove = new char[] { pair[0], pair[1] },
+                                    lettersToImprove = new char[] { pair[0], pair[1], pair[0], pair[1] },
                                 };
                             }
                             else
@@ -44,46 +61,6 @@ public class Bonus : MonoBehaviour
                                     lettersToImprove = null,
                                 };
                             }
-                        }
-                    };
-                }
-            },
-            new BonusSpawner {
-                weight = 1,
-                get = () => {
-                    return new BonusInfo {
-                        name = "Vowels",
-                        description = "Improves a random vowel in the word",
-                        onScore = (word) => {
-                            int vowelCount = 0;
-                            foreach (char c in word)
-                            {
-                                if (Util.IsVowel(c)) vowelCount++;
-                            }
-
-                            int randVowel = Random.Range(0, vowelCount);
-                            int i = 0;
-                            foreach (char c in word)
-                            {
-                                if (Util.IsVowel(c)) 
-                                {
-                                    if (i == randVowel) {
-                                        return new BonusAction {
-                                            isAffected = true,
-                                            score = 0,
-                                            lettersToImprove = new char[] { c },
-                                        };
-                                    }
-
-                                    i++;
-                                }                            
-                            }
-
-                            return new BonusAction {
-                                isAffected = false,
-                                score = 0,
-                                lettersToImprove = null,
-                            };
                         }
                     };
                 }
@@ -127,6 +104,172 @@ public class Bonus : MonoBehaviour
                         }
                     };
                 }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    return new BonusInfo {
+                        name = "Best copy",
+                        description = "Looks for the most improved letter in the word, then adds its level to the score",
+                        onScore = (word) => {
+                            int bestLevel = 0;
+
+                            foreach (char c in word)
+                            {
+                                Letter l = GameManager.i.GetLetterFromChar(c);
+
+                                if (l.level > bestLevel) bestLevel = l.level;
+                            }
+
+                            return new BonusAction {
+                                isAffected = true,
+                                score = bestLevel,
+                                lettersToImprove = null,
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    return new BonusInfo {
+                        name = "Worst copy",
+                        description = "Looks for the least improved letter in the word, then adds twice its level to the score",
+                        onScore = (word) => {
+                            int worstLevel = 100000000;
+
+                            foreach (char c in word)
+                            {
+                                Letter l = GameManager.i.GetLetterFromChar(c);
+
+                                if (l.level < worstLevel) worstLevel = l.level;
+                            }
+
+                            return new BonusAction {
+                                isAffected = true,
+                                score = worstLevel,
+                                lettersToImprove = null,
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    return new BonusInfo {
+                        name = "Short word",
+                        description = "If the word is 4 letters long, improves the 4 letters.",
+                        onScore = (word) => {
+                            if (word.Length == 4)
+                            {
+                                char[] lettersToImprove = new char[4];
+
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    lettersToImprove[i] = word[i];
+                                }
+
+                                return new BonusAction {
+                                    isAffected = true,
+                                    score = 0,
+                                    lettersToImprove = lettersToImprove,
+                                };
+                            }
+                            else
+                            {
+                                return new BonusAction {
+                                    isAffected = false,
+                                    score = 0,
+                                    lettersToImprove = null,
+                                };
+                            }
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    return new BonusInfo {
+                        name = "Rare letters",
+                        description = $"Improves the level of every {Util.DecorateArgument('q')}, {Util.DecorateArgument('j')} and {Util.DecorateArgument('z')} in the word, then give 5 points if found any of them",
+                        onScore = (word) => {
+                            List<char> chars = new List<char>();
+
+                            foreach (char c in word)
+                            {
+                                if (c == 'Q' || c == 'J' || c == 'Z')
+                                {
+                                    chars.Add(c);
+                                }
+                            }    
+                        
+                            return new BonusAction {
+                                isAffected = chars.Count > 0,
+                                score = chars.Count > 0 ? 5 : 0,
+                                lettersToImprove = chars.ToArray(),
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    return new BonusInfo {
+                        name = "Double",
+                        description = $"If the word contains two identical adjacent letters, improve the level of the letter.",
+                        onScore = (word) => {
+                            List<char> chars = new List<char>();
+
+                            char last = '\0';
+                            foreach (char c in word)
+                            {
+                                if (last == c)
+                                {
+                                    chars.Add(c);
+                                }
+
+                                last = c;
+                            }    
+                        
+                            return new BonusAction {
+                                isAffected = chars.Count > 0,
+                                score = 0,
+                                lettersToImprove = chars.ToArray(),
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    return new BonusInfo {
+                        name = "The initial",
+                        description = $"Improves the first letter of the word",
+                        onScore = (word) => {  
+                            if (word.Length > 0) 
+                            {
+                                return new BonusAction {
+                                    isAffected = true,
+                                    score = 0,
+                                    lettersToImprove = new char[1] { word[0] },
+                                };
+                            }
+                            else
+                            {
+                                return new BonusAction {
+                                    isAffected = true,
+                                    score = 0,
+                                    lettersToImprove = null,
+                                };
+                            }
+                        }
+                    };
+                }
             }
         };
 
@@ -149,9 +292,23 @@ public class Bonus : MonoBehaviour
 
         throw new System.Exception("Unreachable");
     }
+
+    public void OnClick()
+    {
+        BonusPopup.i.ShowPopup(info, popupAction, popupActionText);
+    }
+
+    public BonusAction UpdateScoreInterface(string word, bool withInterface)
+    {
+        BonusAction res = info.onScore(word.ToUpper());
+
+        isOscillating = res.isAffected && withInterface;
+
+        return res;
+    }
 }
 
-public struct BonusInfo
+public class BonusInfo
 {
     public string name;
     public string description;

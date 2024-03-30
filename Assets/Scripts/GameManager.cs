@@ -17,13 +17,13 @@ public class GameManager : MonoBehaviour
     public Transform inputParent;
     public GameObject inputLetterPrefab;
 
-    [System.NonSerialized] public List<Bonus> bonuses;
+    public List<Bonus> bonuses;
 
     private Letter[] letters;
 
     private InputLetter[] inputLetters;
     private string inputWord;
-    private int totalScore;
+    private int totalScore = -1;
     private Constraint currentConstraint;
     private int currentLevel;
     private int levelWords = 0;
@@ -37,6 +37,9 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI targetScoreText;
     public TextMeshProUGUI constraintText;
     public DotCounter wordsCounter;
+    public Transform bonusParent;
+
+    private bool submissionAnimation = false;
 
     
     private void Awake()
@@ -78,7 +81,6 @@ public class GameManager : MonoBehaviour
         else {
             ImprovementManager.i.Do(onFinished);
         }
-
     }
 
     private void StartLevel()
@@ -88,6 +90,7 @@ public class GameManager : MonoBehaviour
         wordsCounter.SetValue(1);
         ChangeConstraint();
         UpdateTotalScore(0, false);
+        UpdateTotalScore(0, true);
         UpdateTargetScoreText(false);
     } 
 
@@ -99,19 +102,6 @@ public class GameManager : MonoBehaviour
 
     public void Update() 
     {
-        int currentScore = 0;
-        
-        if (CheckIfWordAllowed())
-        {
-            currentScore = ComputeWordScore();
-        }
-        else
-        {
-            currentScore = 0;
-        }
-
-        UpdateCurrentScoreText(currentScore);
-
         // Record keys on computer
         if (Input.anyKeyDown)
         {
@@ -131,6 +121,24 @@ public class GameManager : MonoBehaviour
         {
             SubmitWord();
         }
+    }
+
+
+    public void UpdatePreviewInterface()
+    {
+        int currentScore = 0;
+        
+        if (CheckIfWordAllowed())
+        {
+            currentScore = ComputeWordScore(true);
+        }
+        else
+        {
+            currentScore = 0;
+            ResetBonusesInterface();
+        }
+
+        UpdateCurrentScoreText(currentScore);
     }
 
 
@@ -167,21 +175,30 @@ public class GameManager : MonoBehaviour
 
     public void SubmitWord() 
     {
-        StartCoroutine(Coroutine());
+        if (!submissionAnimation)
+        {
+            submissionAnimation = true;
+            StartCoroutine(Coroutine());
+        }
 
-        IEnumerator<WaitForSeconds> Coroutine() {
+        IEnumerator<WaitForSeconds> Coroutine() 
+        {
+            Debug.Log("C");
             if (CheckIfWordAllowed())
             {
-                int score = ComputeWordScore();
+                int score = ComputeWordScore(false);
                 
                 UpdateTotalScore(totalScore + score, false);
                 UpdateCurrentScoreText(0);
+
+                ImproveLettersFromBonuses();
                 ClearInput();
 
                 if (totalScore >= GetLevelTargetScore())
                 {
                     yield return new WaitForSeconds(0.5f);
                     LevelCompleted();
+                    submissionAnimation = false;
                     yield break;
                 }
                 else if (levelWords >= wordsPerLevel)
@@ -194,6 +211,8 @@ public class GameManager : MonoBehaviour
                 wordsCounter.SetValue(levelWords + 1);
                 ChangeConstraint();
             }
+
+            submissionAnimation = false;
         }
     }
 
@@ -225,7 +244,7 @@ public class GameManager : MonoBehaviour
 
         if (!immediate)
         {
-            Util.LeanTweenShake(totalScoreText.gameObject, 20, 0.4f);
+            Util.LeanTweenShake(totalScoreText.gameObject, 25, 0.4f);
         }
 
         totalScoreText.text = totalScore.ToString();
@@ -263,6 +282,8 @@ public class GameManager : MonoBehaviour
         newLetter.TriggerCreationAnimation();
 
         inputWord = inputWord.Insert(inputWord.Length, c.ToString());
+
+        UpdatePreviewInterface();
     }
 
     /// <summary>
@@ -289,6 +310,8 @@ public class GameManager : MonoBehaviour
             lastLetter.DestroyWithAnimation();
 
             inputWord = inputWord.Remove(inputWord.Length - 1);
+
+            UpdatePreviewInterface();
         }
     }
 
@@ -298,7 +321,7 @@ public class GameManager : MonoBehaviour
         constraintText.text = currentConstraint.GetDescription();
     }
 
-    private int ComputeWordScore()
+    private int ComputeWordScore(bool showBonusInterface)
     {
         int total = 0;
 
@@ -308,7 +331,47 @@ public class GameManager : MonoBehaviour
             total += l.level;
         }
 
+        foreach (Bonus bonus in bonuses)
+        {
+            BonusAction a = bonus.UpdateScoreInterface(inputWord, showBonusInterface);
+
+            if (a.isAffected)
+            {
+                total += a.score;
+            }
+        }
+
         return total;
+    }
+
+    private void ResetBonusesInterface()
+    {
+        foreach (Bonus bonus in bonuses)
+        {
+            bonus.UpdateScoreInterface(inputWord, false);
+        }
+    }
+
+    private void ImproveLettersFromBonuses()
+    {
+        Debug.Log("A");
+
+        foreach (Bonus bonus in bonuses)
+        {
+            BonusAction a = bonus.UpdateScoreInterface(inputWord, false);
+
+            if (a.isAffected && a.lettersToImprove != null)
+            {
+                Debug.Log(a.lettersToImprove.Length);
+
+                foreach (char c in a.lettersToImprove)
+                {
+                    GetLetterFromChar(c).level++;
+                }
+            }
+        }
+
+        Keyboard.i.UpdateAllKeys();
     }
 
     private int GetLevelTargetScore()

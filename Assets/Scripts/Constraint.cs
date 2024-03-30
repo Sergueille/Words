@@ -25,7 +25,12 @@ public struct Constraint
         if (enumValue == ContraintType.Contains)
         {
             res.stringArg = Util.GetRandomElement(new string[] {
-                "AR", "AT", "AP", "AS", "AL", "AM", "AC", "AB", "AN", "EA", "ER", "ET", "ES", "ED", "EL", "EM", "EC", "EN", "RA", "RE", "RI", "RO", "RS", "TA", "TE", "TR", "TI", "TO", "TH", "UR", "US", "UL", "UN", "IA", "IE", "IT", "IO", "IS", "ID", "IL", "IC", "IN", "OR", "OT", "OU", "OP", "OS", "OG", "OL", "OM", "OC", "ON", "PA", "PE", "PR", "PI", "PO", "PH", "SE", "ST", "SU", "SI", "SS", "SH", "DE", "DI", "GE", "HA", "HE", "HI", "HO", "LA", "LE", "LY", "LI", "LO", "LL", "MA", "ME", "MI", "MO", "CA", "CE", "CT", "CI", "CO", "CH", "VE", "BL", "NA", "NE", "NT", "NI", "NO", "NS", "ND", "NG", "NC",
+                "AR", "AT", "AP", "AS", "AL", "AM", "AC", "AB", "AN", "EA", "ER", "ET", "ES", "ED", "EL", "EM", "EC", "EN", "RA", "RE", "RI", "RO", "RS", 
+                "TA", "TE", "TR", "TI", "TO", "TH", "UR", "US", "UL", "UN", "IA", "IE", "IT", "IO", "IS", "ID", "IL", "IC", "IN", "OR", "OT", "OU", "OP", 
+                "OS", "OG", "OL", "OM", "OC", "ON", "PA", "PE", "PR", "PI", "PO", "PH", "SE", "ST", "SU", "SI", "SS", "SH", "DE", "DI", "GE", "HA", "HE", 
+                "HI", "HO", "LA", "LE", "LY", "LI", "LO", "LL", "MA", "ME", "MI", "MO", "CA", "CE", "CT", "CI", "CO", "CH", "VE", "BL", "NA", "NE", "NT", 
+                "NI", "NO", "NS", "ND", "NG", "NC",
+                "J", "Q", "X"
             });
         }
         else if (enumValue == ContraintType.StatsWith)
@@ -42,7 +47,7 @@ public struct Constraint
         }
         else if (enumValue == ContraintType.HasLength)
         {
-            res.intArg = Random.Range(6, 11);
+            res.intArg = Random.Range(9, 11);
         }
         else throw new System.Exception("Branch missing!");
 
