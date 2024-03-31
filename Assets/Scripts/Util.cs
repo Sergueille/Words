@@ -36,4 +36,17 @@ public static class Util
         c = char.ToLower(c);
         return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'y';
     }
+
+    public static int CountVowels(string word)
+    {
+        int res = 0;
+
+        foreach (char s in word)
+        {
+            if (IsVowel(s))
+                res++;
+        }
+
+        return res;
+    }
 }

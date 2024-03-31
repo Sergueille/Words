@@ -7,6 +7,9 @@ public class Bonus : MonoBehaviour
     public BonusInfo info;
 
     [SerializeField] private TextMeshProUGUI nameText;
+    [SerializeField] private TextMeshProUGUI scoreText;
+    [SerializeField] private Transform scoreTextUp;
+    [SerializeField] private Transform scoreTextDown;
 
     public System.Action popupAction;
     public string popupActionText;
@@ -17,6 +20,7 @@ public class Bonus : MonoBehaviour
     {
         info = GetRandomBonus();
         nameText.text = info.name;
+        scoreText.transform.position = scoreTextDown.position;
     }
 
     private void Update()
@@ -35,14 +39,19 @@ public class Bonus : MonoBehaviour
     {
         BonusSpawner[] spawns = {
             new BonusSpawner {
-                weight = 1,
+                weight = 2,
                 get = () => {
                     string pair = Util.GetRandomElement(new string[] {
-                        "ZZ", "EQ", "EK", "RW", "TF", "TM", "TB", "TN", "YG", "UF", "UK", "IX", "OZ", "PN", "DM", "FY", "GM", "HS", "HM", "HN", "KY", "KN", "LF", "LG", "LK", "LB", "WR", "WS", "WL", "WN", "XY", "XO", "XP", "XC", "BY", "NZ", "NJ", "NW", 
+                        "AR", "AT", "AP", "AS", "AL", "AM", "AC", "AB", "AN", "EA", "ET", "ES", "ED", "EL", "EM", "EC", "EN", "RA", "RE", 
+                        "RI", "RO", "RS", "TA", "TE", "TR", "TI", "TO", "TH", "UR", "US", "UL", "UN", "IA", "IE", "IT", "IO", "IS", "ID", 
+                        "IL", "IC", "OR", "OT", "OU", "OP", "OS", "OG", "OL", "OM", "OC", "ON", "PA", "PE", "PR", "PI", "PO", "PH", "SE", 
+                        "ST", "SU", "SI", "SS", "SH", "DE", "DI", "GE", "HA", "HE", "HI", "HO", "LA", "LE", "LY", "LI", "LO", "LL", "MA", 
+                        "ME", "MI", "MO", "CA", "CE", "CT", "CI", "CO", "CH", "VE", "BL", "NA", "NE", "NT", "NI", "NO", "NS", "ND", "NG", 
+                        "NC", 
                     });
 
                     return new BonusInfo {
-                        name = "The pair",
+                        name = pair,
                         description = $"If the word contains {Util.DecorateArgument(pair)}, improves these letters by two levels",
                         onScore = (word) => {
                             if (word.Contains(pair))
@@ -66,7 +75,7 @@ public class Bonus : MonoBehaviour
                 }
             },
             new BonusSpawner {
-                weight = 1,
+                weight = 0.8f,
                 get = () => {
                     return new BonusInfo {
                         name = "Consonants",
@@ -156,7 +165,7 @@ public class Bonus : MonoBehaviour
                 }
             },
             new BonusSpawner {
-                weight = 1,
+                weight = 0.8f,
                 get = () => {
                     return new BonusInfo {
                         name = "Short word",
@@ -190,11 +199,11 @@ public class Bonus : MonoBehaviour
                 }
             },
             new BonusSpawner {
-                weight = 1,
+                weight = 0.8f,
                 get = () => {
                     return new BonusInfo {
                         name = "Rare letters",
-                        description = $"Improves the level of every {Util.DecorateArgument('q')}, {Util.DecorateArgument('j')} and {Util.DecorateArgument('z')} in the word, then give 5 points if found any of them",
+                        description = $"Improves the level of every {Util.DecorateArgument('q')}, {Util.DecorateArgument('j')} and {Util.DecorateArgument('z')} in the word, then give 10 points if found any of them",
                         onScore = (word) => {
                             List<char> chars = new List<char>();
 
@@ -208,7 +217,7 @@ public class Bonus : MonoBehaviour
                         
                             return new BonusAction {
                                 isAffected = chars.Count > 0,
-                                score = chars.Count > 0 ? 5 : 0,
+                                score = chars.Count > 0 ? 10 : 0,
                                 lettersToImprove = chars.ToArray(),
                             };
                         }
@@ -216,7 +225,7 @@ public class Bonus : MonoBehaviour
                 }
             },
             new BonusSpawner {
-                weight = 1,
+                weight = 0.8f,
                 get = () => {
                     return new BonusInfo {
                         name = "Double",
@@ -270,7 +279,130 @@ public class Bonus : MonoBehaviour
                         }
                     };
                 }
-            }
+            },
+            new BonusSpawner {
+                weight = 0.7f,
+                get = () => {
+                    return new BonusInfo {
+                        name = "More vowels",
+                        description = "If the word has strictly more vowels than consonants, improves every letter of the word",
+                        onScore = (word) => {  
+                            int vowelCount = Util.CountVowels(word);
+
+                            if (2 * vowelCount > word.Length)
+                            {
+                                return new BonusAction {
+                                    isAffected = true,
+                                    score = 0,
+                                    lettersToImprove = word.ToCharArray(),
+                                };
+                            }
+                            else
+                            {
+                                return new BonusAction {
+                                    isAffected = false,
+                                    score = 0,
+                                    lettersToImprove = null,
+                                };
+                            }
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    int rand = Random.Range(7, 12);
+                    int score = 21 - rand;
+
+                    return new BonusInfo {
+                        name = $"{rand} letters",
+                        description = $"If the word is exactly {rand} letters long, adds {score} points to score.",
+                        onScore = (word) => {  
+                            if (word.Length == rand)
+                            {
+                                return new BonusAction {
+                                    isAffected = true,
+                                    score = score,
+                                    lettersToImprove = null,
+                                };
+                            }
+                            else
+                            {
+                                return new BonusAction {
+                                    isAffected = false,
+                                    score = 0,
+                                    lettersToImprove = null,
+                                };
+                            }
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    return new BonusInfo {
+                        name = $"Triple",
+                        description = $"If the word contains three identical letters, improve the level of the letter.",
+                        onScore = (word) => { 
+                            int[] counts = new int[26];
+                            List<char> lettersToImprove = new List<char>();
+
+                            foreach (char c in word)
+                            {
+                                counts[c - 'A']++;
+                            }
+
+                            for (int i = 0; i < 26; i++)
+                            {
+                                if (counts[i] >= 3)
+                                {
+                                    lettersToImprove.Add((char)(i + 'A'));
+                                }
+                            }
+
+                            return new BonusAction {
+                                isAffected = lettersToImprove.Count > 0,
+                                score = 0,
+                                lettersToImprove = lettersToImprove.ToArray(),
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    return new BonusInfo {
+                        name = $"",
+                        description = $"Looks for the vowel that appeared the most in the word, then adds 7 points per time it appeared",
+                        onScore = (word) => {  
+                            int[] counts = new int[26];
+
+                            foreach (char c in word)
+                            {
+                                counts[c - 'A']++;
+                            }
+
+                            int best = 0;
+                            for (int i = 0; i < 26; i++)
+                            {
+                                if (Util.IsVowel((char)(i + 'A')) && best < counts[i])
+                                {
+                                    best = counts[i];
+                                }
+                            }
+
+                            return new BonusAction {
+                                isAffected = best > 0,
+                                score = 7 * best,
+                                lettersToImprove = null,
+                            };
+                        }
+                    };
+                }
+            },
         };
 
         float totalWeight = 0;
@@ -303,6 +435,20 @@ public class Bonus : MonoBehaviour
         BonusAction res = info.onScore(word.ToUpper());
 
         isOscillating = res.isAffected && withInterface;
+
+        if (withInterface && res.isAffected && res.score > 0)
+        {
+            scoreText.text = $"+{res.score}";
+
+            LeanTween.move(scoreText.gameObject, scoreTextUp.position, 0.4f).setEaseOutElastic();
+        }
+        else
+        {   
+            if (scoreText.transform.position != scoreTextDown.position)
+            {
+                LeanTween.move(scoreText.gameObject, scoreTextDown.position, 0.4f).setEaseInQuad();
+            }
+        }
 
         return res;
     }

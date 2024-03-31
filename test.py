@@ -12,6 +12,6 @@ for a in alphabet:
             if (a + b) in word:
                 counter += 1
 
-        if counter > 500 and counter < 1000:
+        if counter > 10000 and counter < 50000:
             print("\"{}\", ".format((a + b).upper()), end="")
 
