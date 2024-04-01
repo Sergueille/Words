@@ -9,6 +9,7 @@ public struct Constraint
         StatsWith,
         EndsWith,
         HasLength,
+        ContainsNot,
     }
 
     public ContraintType type;
@@ -49,6 +50,12 @@ public struct Constraint
         {
             res.intArg = Random.Range(9, 11);
         }
+        else if (enumValue == ContraintType.ContainsNot)
+        {
+            res.stringArg = Util.GetRandomElement(new string[] {
+                "E", "T", "A", "S"
+            });
+        }
         else throw new System.Exception("Branch missing!");
 
         return res;
@@ -74,6 +81,10 @@ public struct Constraint
         {
             return word.Length == intArg;
         }
+        else if (type == ContraintType.ContainsNot)
+        {
+            return !word.Contains(stringArg);
+        }
         else throw new System.Exception("Branch missing!");
     }
 
@@ -95,6 +106,10 @@ public struct Constraint
         else if (type == ContraintType.HasLength)
         {
             return $"Must be exactly {Util.DecorateArgument(intArg)} letters long";
+        }
+        else if (type == ContraintType.ContainsNot)
+        {
+            return $"Must NOT contain {Util.DecorateArgument(stringArg)}";
         }
         else throw new System.Exception("Branch missing!");
     }

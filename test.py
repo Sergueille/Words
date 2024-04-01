@@ -5,13 +5,10 @@ alphabet = "azertyuiopqsdfghjklmwxcvbn"
 
 txt = open("Assets/Resources/words.txt").read().split("\n")
 
-for a in alphabet:
-    for b in alphabet:
-        counter = 0
-        for word in txt:
-            if (a + b) in word:
-                counter += 1
-
-        if counter > 10000 and counter < 50000:
-            print("\"{}\", ".format((a + b).upper()), end="")
+count = 0
+for word in txt:
+    if len(word) >= 4:
+        if word[0] == word[len(word) - 1]:
+            count += 1
+print(count)
 

@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     public int maxWordLength = 12;
     public int wordsPerLevel = 3;
     public int maxBonus = 4;
+    public string rareLetters = "JQXZ";
     
     public float scoreExpMultiplier = 20.0f;
     public float scoreExpSpeed = 0.15f;
@@ -50,7 +51,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < 26; i++) {
             letters[i] = new Letter {
                 letter = (char)((int)'A' + i),
-                level = 1,
+                level = rareLetters.Contains((char)((int)'A' + i)) ? 2 : 1,
             };
         }
 

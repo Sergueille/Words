@@ -203,13 +203,13 @@ public class Bonus : MonoBehaviour
                 get = () => {
                     return new BonusInfo {
                         name = "Rare letters",
-                        description = $"Improves the level of every {Util.DecorateArgument('q')}, {Util.DecorateArgument('j')} and {Util.DecorateArgument('z')} in the word, then give 10 points if found any of them",
+                        description = $"Improves the level of every {Util.DecorateArgument('Q')}, {Util.DecorateArgument('J')}, {Util.DecorateArgument('X')} and {Util.DecorateArgument('Z')} in the word, then give 10 points if found any of them",
                         onScore = (word) => {
                             List<char> chars = new List<char>();
 
                             foreach (char c in word)
                             {
-                                if (c == 'Q' || c == 'J' || c == 'Z')
+                                if (c == 'Q' || c == 'J' || c == 'Z' || c == 'X')
                                 {
                                     chars.Add(c);
                                 }
@@ -313,7 +313,7 @@ public class Bonus : MonoBehaviour
                 weight = 1,
                 get = () => {
                     int rand = Random.Range(7, 12);
-                    int score = 21 - rand;
+                    int score = 23 - rand;
 
                     return new BonusInfo {
                         name = $"{rand} letters",
@@ -372,11 +372,11 @@ public class Bonus : MonoBehaviour
                 }
             },
             new BonusSpawner {
-                weight = 1,
+                weight = 0.9f,
                 get = () => {
                     return new BonusInfo {
-                        name = $"",
-                        description = $"Looks for the vowel that appeared the most in the word, then adds 7 points per time it appeared",
+                        name = $"Frequent vowel",
+                        description = $"Looks for the vowel that appeared the most in the word, then adds 6 points per time it appeared",
                         onScore = (word) => {  
                             int[] counts = new int[26];
 
@@ -396,9 +396,99 @@ public class Bonus : MonoBehaviour
 
                             return new BonusAction {
                                 isAffected = best > 0,
-                                score = 7 * best,
+                                score = 6 * best,
                                 lettersToImprove = null,
                             };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1,
+                get = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'V', 'B', 'K' });
+
+                    return new BonusInfo {
+                        name = $"Emergency {letter}",
+                        description = $"If the word contains {Util.DecorateArgument(letter)} and the level of the letter is even, improves its level by 3 and gives 30 points.",
+                        onScore = (word) => {  
+                            Letter l = GameManager.i.GetLetterFromChar(letter);
+
+                            foreach (char c in word)
+                            {   
+                                if (c == letter)
+                                {
+                                    if (l.level % 2 == 0)
+                                    {
+                                        return new BonusAction {
+                                            isAffected = true,
+                                            score = 30,
+                                            lettersToImprove = new char[3] { letter, letter, letter },
+                                        };
+                                    }
+                                }
+                            }
+
+                            return new BonusAction {
+                                isAffected = false,
+                                score = 0,
+                                lettersToImprove = null,
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                get = () => {
+                    return new BonusInfo {
+                        name = "Equalizer",
+                        description = "Improves the least improved letter in the word (will improve the leftmost if multiple letters)",
+                        onScore = (word) => {
+                            int least = 100000000;
+                            int leastId = 0;
+                            for (int i = 0; i < word.Length; i++)
+                            {
+                                Letter letter = GameManager.i.GetLetterFromChar(word[i]);
+                                if (letter.level < least)
+                                {
+                                    least = letter.level;
+                                    leastId = i;
+                                }
+                            }
+
+                            return new BonusAction {
+                                isAffected = true,
+                                score = 0,
+                                lettersToImprove = new char[1] { word[leastId] },
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                get = () => {
+                    return new BonusInfo {
+                        name = "Palindrome",
+                        description = "If the first letter and the last letter of the word are the same, improves the first letter twice and gives 15 points",
+                        onScore = (word) => {
+                            if (word[0] == word[word.Length - 1])
+                            {
+                                return new BonusAction {
+                                    isAffected = true,
+                                    score = 15,
+                                    lettersToImprove = new char[2] { word[0], word[0] },
+                                };
+                            }
+                            else
+                            {
+                                return new BonusAction {
+                                    isAffected = false,
+                                    score = 0,
+                                    lettersToImprove = null,
+                                };
+                            }
                         }
                     };
                 }
