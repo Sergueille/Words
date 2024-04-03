@@ -18,12 +18,11 @@ public class Key : MonoBehaviour
 
     [SerializeField] private Image improveImage;
     [SerializeField] private Color improveImageColor;
-    private int lastLevel;
+    private int lastLevel = -1;
 
     private void Awake()
     {
         improveImage.gameObject.SetActive(false);
-        lastLevel = 1;
     }
 
     public void UpdateUI() {

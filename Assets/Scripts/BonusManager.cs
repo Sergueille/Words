@@ -9,6 +9,8 @@ public class BonusManager : MonoBehaviour
 
     [SerializeField] private Transform bonusParent;
     [SerializeField] private GameObject bonusPrefab;
+
+    private bool finished;
     
     private void Awake()
     {
@@ -22,23 +24,15 @@ public class BonusManager : MonoBehaviour
         IEnumerator<WaitUntil> Coroutine() 
         {
             PanelsManager.i.SelectPanel("Bonus", false);
-            bool finished = false;
+            finished = false;
 
             for (int i = 0; i < choiceCount; i++) 
             {
                 Bonus bonus = Instantiate(bonusPrefab, bonusParent).GetComponent<Bonus>();
 
                 bonus.popupAction = () => {
-                    finished = true;
-                    GameManager.i.bonuses.Add(bonus);
-                    bonus.transform.SetParent(GameManager.i.bonusParent, false);
                     BonusPopup.i.HidePopup();
-                    Util.LeanTweenShake(bonus.gameObject, 40, 0.5f);
-
-                    bonus.popupActionText = "Remove";
-                    bonus.popupAction = () => {
-                        Debug.Log("TODO!"); // TODO
-                    };
+                    finished = GameManager.i.AddBonus(bonus);
                 };
                 bonus.popupActionText = "Select";
 
@@ -54,5 +48,10 @@ public class BonusManager : MonoBehaviour
 
             onFinished();
         }
+    }
+
+    public void Skip()
+    {
+        finished = true;
     }
 }

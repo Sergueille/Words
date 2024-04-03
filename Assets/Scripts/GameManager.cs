@@ -39,8 +39,11 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI constraintText;
     public DotCounter wordsCounter;
     public Transform bonusParent;
+    public GameObject bonusFullPanel;
 
     private bool submissionAnimation = false;
+
+    private bool isBonusPopupVisible = false;
 
     
     private void Awake()
@@ -58,6 +61,8 @@ public class GameManager : MonoBehaviour
         inputWord = "";
 
         bonuses = new List<Bonus>();
+
+        bonusFullPanel.SetActive(false);
     }
 
     private void Start() 
@@ -184,7 +189,6 @@ public class GameManager : MonoBehaviour
 
         IEnumerator<WaitForSeconds> Coroutine() 
         {
-            Debug.Log("C");
             if (CheckIfWordAllowed())
             {
                 int score = ComputeWordScore(false);
@@ -197,7 +201,10 @@ public class GameManager : MonoBehaviour
 
                 if (totalScore >= GetLevelTargetScore())
                 {
-                    yield return new WaitForSeconds(0.5f);
+                    Util.PingText(totalScoreText);
+
+                    yield return new WaitForSeconds(0.8f);
+
                     LevelCompleted();
                     submissionAnimation = false;
                     yield break;
@@ -378,6 +385,65 @@ public class GameManager : MonoBehaviour
     private int GetLevelTargetScore()
     {
         return Mathf.FloorToInt(scoreExpMultiplier * Mathf.Exp(currentLevel * scoreExpSpeed));
+    }
+
+    public void RemoveBonus(Bonus bonus)
+    {
+        bonuses.Remove(bonus);
+        Destroy(bonus.gameObject);
+    }
+
+    public void ShowBonusPopup(bool visible)
+    {
+        if (visible)
+        {
+            if (isBonusPopupVisible) return;
+
+            bonusFullPanel.transform.localScale = Vector3.one;
+            bonusFullPanel.SetActive(true);
+            Util.LeanTweenShake(bonusFullPanel, 15, 0.4f);
+
+            isBonusPopupVisible = true;
+        }
+        else
+        {
+            if (!isBonusPopupVisible) return;
+
+            LeanTween.scale(bonusFullPanel, Vector3.zero, 0.2f).setOnComplete(() => {
+                bonusFullPanel.SetActive(false);
+            });
+
+            isBonusPopupVisible = false;
+        }
+    }
+
+    /// <summary>
+    /// Add an already instantiated bonus to list, making all UI changes. Returns true if successful
+    /// </summary>
+    public bool AddBonus(Bonus bonus)
+    {
+        BonusPopup.i.HidePopup();
+        ShowBonusPopup(false);
+
+        if (bonuses.Count >= maxBonus) 
+        {
+            ShowBonusPopup(true);
+            return false;
+        }
+        else
+        {
+            bonuses.Add(bonus);
+            bonus.transform.SetParent(GameManager.i.bonusParent, false);
+            Util.LeanTweenShake(bonus.gameObject, 40, 0.5f);
+
+            bonus.popupActionText = "Remove";
+            bonus.popupAction = () => {
+                BonusPopup.i.HidePopup();
+                GameManager.i.RemoveBonus(bonus);
+            };
+
+            return true;
+        }
     }
 }
 

@@ -49,4 +49,19 @@ public static class Util
 
         return res;
     }
+
+    public static void PingText(TextMeshProUGUI text)
+    {
+        GameObject copy = GameObject.Instantiate(text.gameObject, text.transform.parent);
+        Color endColor = text.color;
+        endColor.a = 0;
+
+        LeanTween.scale(copy, 3.0f * Vector3.one, 0.5f).setEaseOutQuad();
+        LeanTweenTextColor(copy.GetComponent<TextMeshProUGUI>(), endColor, 0.5f).setOnComplete(
+            () => {
+                GameObject.Destroy(copy);
+            }
+        );
+
+    }
 }

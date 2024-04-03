@@ -52,14 +52,14 @@ public class Bonus : MonoBehaviour
 
                     return new BonusInfo {
                         name = pair,
-                        description = $"If the word contains {Util.DecorateArgument(pair)}, improves these letters by two levels",
+                        description = $"If the word contains {Util.DecorateArgument(pair)}, improves these letters by one level",
                         onScore = (word) => {
                             if (word.Contains(pair))
                             {
                                 return new BonusAction {
                                     isAffected = true,
                                     score = 0,
-                                    lettersToImprove = new char[] { pair[0], pair[1], pair[0], pair[1] },
+                                    lettersToImprove = new char[] { pair[0], pair[1] },
                                 };
                             }
                             else
@@ -157,7 +157,7 @@ public class Bonus : MonoBehaviour
 
                             return new BonusAction {
                                 isAffected = true,
-                                score = worstLevel,
+                                score = 2 * worstLevel,
                                 lettersToImprove = null,
                             };
                         }
@@ -460,7 +460,7 @@ public class Bonus : MonoBehaviour
                             return new BonusAction {
                                 isAffected = true,
                                 score = 0,
-                                lettersToImprove = new char[1] { word[leastId] },
+                                lettersToImprove = word.Length == 0 ? null : new char[1] { word[leastId] },
                             };
                         }
                     };
