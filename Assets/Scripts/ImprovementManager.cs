@@ -32,8 +32,15 @@ public class ImprovementManager : MonoBehaviour
                 char c = (char)('A' + (char)Random.Range(0, 26));
                 Key key = Instantiate(letterPrefab, lettersParent).GetComponent<Key>();
                 key.letter = c;
-                key.onPress = c => { 
-                    lettersToImprove.Add(c); 
+                key.onPress = c => {
+                    key.Select(!key.isSelected);
+
+                    if (key.isSelected) {
+                        lettersToImprove.Add(c); 
+                    }
+                    else {
+                        lettersToImprove.Remove(c); 
+                    }
                 };
                 key.UpdateUI();
             }

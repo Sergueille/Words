@@ -471,14 +471,14 @@ public class Bonus : MonoBehaviour
                 get = () => {
                     return new BonusInfo {
                         name = "Palindrome",
-                        description = "If the first letter and the last letter of the word are the same, improves the first letter twice and gives 15 points",
+                        description = "If the first letter and the last letter of the word are the same, improves the first letter and gives 15 points",
                         onScore = (word) => {
                             if (word[0] == word[word.Length - 1])
                             {
                                 return new BonusAction {
                                     isAffected = true,
                                     score = 15,
-                                    lettersToImprove = new char[2] { word[0], word[0] },
+                                    lettersToImprove = new char[1] { word[0] },
                                 };
                             }
                             else
@@ -489,6 +489,82 @@ public class Bonus : MonoBehaviour
                                     lettersToImprove = null,
                                 };
                             }
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                get = () => {
+                    return new BonusInfo {
+                        name = "oOo",
+                        description = $"Improves the letters located directly after an {Util.DecorateArgument("O")}",
+                        onScore = (word) => {
+                            List<char> lettersToImprove = new List<char>();
+
+                            bool lastWasO = false;
+                            foreach (char c in word) {
+                                if (lastWasO) {
+                                    lettersToImprove.Add(c);
+                                }
+
+                                lastWasO = c == 'O';
+                            }
+
+                            return new BonusAction {
+                                isAffected = lettersToImprove.Count > 0,
+                                score = 0,
+                                lettersToImprove = lettersToImprove.ToArray(),
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                get = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'N', 'R', 'I' });
+
+                    return new BonusInfo {
+                        name = $"{letter} everywhere",
+                        description = $"Improves every {Util.DecorateArgument(letter)} in the word. If the word doesn't contain any, -500 points.",
+                        onScore = (word) => {
+                            List<char> lettersToImprove = new List<char>();
+
+                            foreach (char c in word) {
+                                if (c == letter) {
+                                    lettersToImprove.Add(c);
+                                }
+                            }
+
+                            return new BonusAction {
+                                isAffected = true,
+                                score = lettersToImprove.Count > 0 ? 0 : -500,
+                                lettersToImprove = lettersToImprove.ToArray(),
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                get = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'N', 'R', 'I' });
+
+                    return new BonusInfo {
+                        name = $"Forbidden {letter}",
+                        description = $"Improves {Util.DecorateArgument(letter)} by two levels. If the word contain this letter, -500 points.",
+                        onScore = (word) => {
+                            bool found = false;
+                            foreach (char c in word) {
+                                found |= c == letter;
+                            }
+
+                            return new BonusAction {
+                                isAffected = true,
+                                score = found ? -500 : 00,
+                                lettersToImprove = new char[2] { letter, letter },
+                            };
                         }
                     };
                 }

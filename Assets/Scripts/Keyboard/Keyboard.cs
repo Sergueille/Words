@@ -19,10 +19,7 @@ public class Keyboard : MonoBehaviour
     private void Awake()
     {
         i = this;
-    }
-
-    private void Start() 
-    {
+        
         keys = new Key[26];
 
         int keyID = 0;

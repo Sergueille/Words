@@ -20,7 +20,8 @@ public class GameManager : MonoBehaviour
 
     public List<Bonus> bonuses;
 
-    private Letter[] letters;
+    [System.NonSerialized]
+    public Letter[] letters;
 
     private InputLetter[] inputLetters;
     private string inputWord;
@@ -45,6 +46,7 @@ public class GameManager : MonoBehaviour
 
     private bool isBonusPopupVisible = false;
 
+    public Stats gameStats;
     
     private void Awake()
     {
@@ -68,8 +70,27 @@ public class GameManager : MonoBehaviour
     private void Start() 
     {
         Word.Init();
-        HideError(true);
+        StartGame();
+    }
 
+    public void StartGame()
+    {
+        PanelsManager.i.SelectPanel("Main", false);
+
+        gameStats = new Stats();
+
+        // Reset letters
+        for (int i = 0; i < 26; i++) {
+            letters[i] = new Letter {
+                letter = (char)((int)'A' + i),
+                level = rareLetters.Contains((char)((int)'A' + i)) ? 2 : 1,
+            };
+        }
+
+        Keyboard.i.UpdateAllKeys();
+
+        HideError(true);
+        bonuses.Clear();
         currentLevel = -1;
         StartLevel();
     }
@@ -95,7 +116,7 @@ public class GameManager : MonoBehaviour
         levelWords = 0;
         wordsCounter.SetValue(1);
         ChangeConstraint();
-        UpdateTotalScore(0, false);
+        UpdateCurrentScoreText(0);
         UpdateTotalScore(0, true);
         UpdateTargetScoreText(false);
     } 
@@ -197,6 +218,20 @@ public class GameManager : MonoBehaviour
                 UpdateCurrentScoreText(0);
 
                 ImproveLettersFromBonuses();
+
+                gameStats.wordCount++;
+
+                // Check if best score
+                if (score >= gameStats.bestScore) {
+                    gameStats.bestScore = score;
+                    gameStats.bestScoreWord = inputWord;
+                }
+
+                // Bump letter use count
+                foreach (char c in inputWord) {
+                    GetLetterFromChar(c).timesUsed++;
+                }
+
                 ClearInput();
 
                 if (totalScore >= GetLevelTargetScore())
@@ -209,12 +244,13 @@ public class GameManager : MonoBehaviour
                     submissionAnimation = false;
                     yield break;
                 }
-                else if (levelWords >= wordsPerLevel)
+                else if (levelWords >= wordsPerLevel - 1)
                 {
-                    // TODO: game over!
-                    Debug.Log("Game Over!");
+                    yield return new WaitForSeconds(0.8f);                
+                    GameEndManager.i.Do();
+                    yield break;
                 }
-                
+
                 levelWords++;
                 wordsCounter.SetValue(levelWords + 1);
                 ChangeConstraint();
@@ -238,7 +274,13 @@ public class GameManager : MonoBehaviour
             LeanTween.scale(currentScoreText.gameObject, Vector3.one, 0.2f).setEaseOutQuad();
 
             Util.LeanTweenShake(currentScoreText.gameObject, 15.0f, 0.5f);
-            currentScoreText.text = $"+{currentScore}";
+            
+            if (currentScore > 0) {
+                currentScoreText.text = $"+{currentScore}";
+            }
+            else {
+                currentScoreText.text = currentScore.ToString();
+            }
         }
 
         lastCurrentScore = currentScore;

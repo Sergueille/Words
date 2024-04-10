@@ -42,6 +42,7 @@ public class Letter
 {
     public char letter;
     public int level;
+    public int timesUsed = 0;
 }
 
 

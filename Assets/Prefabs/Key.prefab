@@ -399,6 +399,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   letterText: {fileID: 2266454660082649441}
   levelText: {fileID: 745035764198353118}
+  background: {fileID: 3138634777371656500}
+  baseColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
+  selectedColor: {r: 0.75, g: 0.14999999, b: 0.14999999, a: 1}
   improveImage: {fileID: 4233135753239496330}
   improveImageColor: {r: 0.83, g: 0.16517, b: 0.16517, a: 1}
 --- !u!114 &548675545259247536

@@ -63,5 +63,6 @@ public static class Util
             }
         );
 
+        LeanTweenShake(text.gameObject, 20, 0.3f);
     }
 }
