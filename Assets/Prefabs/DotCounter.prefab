@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 4777985899686919286}
   - component: {fileID: 6550663836999193460}
   - component: {fileID: 5524976772585359303}
+  - component: {fileID: 4833486175160723573}
+  - component: {fileID: 4637778680368468175}
   m_Layer: 5
   m_Name: DotCounter
   m_TagString: Untagged
@@ -81,3 +83,33 @@ MonoBehaviour:
   m_ChildScaleWidth: 1
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &4833486175160723573
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1393218962870221550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d3adca17d96511baa635cbee5a84456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetComponent: {fileID: 6550663836999193460}
+  propertyName: inactiveColor
+  color: 1
+--- !u!114 &4637778680368468175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1393218962870221550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d3adca17d96511baa635cbee5a84456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetComponent: {fileID: 6550663836999193460}
+  propertyName: activeColor
+  color: 2

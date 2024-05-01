@@ -6,6 +6,8 @@ public class PanelsManager : MonoBehaviour
     public static PanelsManager i;
 
     public GameObject[] panels;
+
+    private string currentPanelName;
     
     private void Awake()
     {
@@ -15,6 +17,8 @@ public class PanelsManager : MonoBehaviour
 
     public void SelectPanel(string name, bool immediate)
     {
+        currentPanelName = name;
+
         foreach (GameObject panel in panels)
         {
             if (panel.name == name)
@@ -36,5 +40,10 @@ public class PanelsManager : MonoBehaviour
     private void ShowPanel(GameObject panel, bool immediate)
     {
         panel.SetActive(true);
+    }
+
+    public string GetCurrentPanelName()
+    {
+        return currentPanelName;
     }
 }

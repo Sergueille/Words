@@ -19,10 +19,10 @@ public class InputLetter : MonoBehaviour
         displayText.text = char.ToUpper(letter).ToString();
 
         displayText.color = appearColor;
-        displayText.transform.localScale = Vector3.one * 1.5f;
-        Util.LeanTweenTextColor(displayText, new Color(1, 1, 1, 1), 0.2f).setEaseOutExpo();
-        LeanTween.scale(displayText.gameObject, Vector3.one, 0.2f).setEaseOutExpo();
-        Util.LeanTweenShake(displayText.gameObject, 20, 0.2f);
+        displayText.transform.localScale = Vector3.one * 2.0f;
+        Util.LeanTweenTextColor(displayText, new Color(1, 1, 1, 1), 0.4f).setEaseOutExpo();
+        LeanTween.scale(displayText.gameObject, Vector3.one, 0.4f).setEaseOutExpo();
+        Util.LeanTweenShake(displayText.gameObject, 20, 0.4f);
     }
 
     public void DestroyWithAnimation() {

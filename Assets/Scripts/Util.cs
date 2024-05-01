@@ -28,13 +28,21 @@ public static class Util
 
     public static string DecorateArgument<T>(T arg)
     {
-        return $"<color=#555><size=130>{arg}</size></color>";
+        Color primaryColor= ColorManager.i.GetColor(ColorManager.ThemeColor.Primary);
+
+        return $"<color=#{ColorUtility.ToHtmlStringRGBA(primaryColor)}><size=130>{arg}</size></color>";
     }
 
     public static bool IsVowel(char c)
     {
         c = char.ToLower(c);
-        return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'y';
+        return GameManager.i.GetLetterFromChar(c).effect == Letter.Effect.Polymorphic || c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'y';
+    }
+
+    public static bool IsConsonant(char c)
+    {
+        c = char.ToLower(c);
+        return GameManager.i.GetLetterFromChar(c).effect == Letter.Effect.Polymorphic || !IsVowel(c);
     }
 
     public static int CountVowels(string word)
@@ -44,6 +52,19 @@ public static class Util
         foreach (char s in word)
         {
             if (IsVowel(s))
+                res++;
+        }
+
+        return res;
+    }
+
+    public static int CountConsonant(string word)
+    {
+        int res = 0;
+
+        foreach (char s in word)
+        {
+            if (IsConsonant(s))
                 res++;
         }
 
@@ -64,5 +85,32 @@ public static class Util
         );
 
         LeanTweenShake(text.gameObject, 20, 0.3f);
+    }
+
+    public static T GetRandomWithSpawners<T>(Spawner<T>[] spawns)
+    {
+        float totalWeight = 0.0f;
+        foreach (Spawner<T> spawn in spawns)
+        {   
+            totalWeight += spawn.weight;
+        }
+
+        float randomSpawn = Random.Range(0.0f, totalWeight);
+        totalWeight = 0;
+        foreach (Spawner<T> spawn in spawns)
+        {
+            totalWeight += spawn.weight;
+            if (randomSpawn <= totalWeight) // Instantiate bonus
+            {
+                return spawn.data;
+            }
+        }
+
+        throw new System.Exception("Unreachable");
+    }
+
+    public struct Spawner<T> {
+        public float weight;
+        public T data;
     }
 }

@@ -14,12 +14,22 @@ public class GameEndManager : MonoBehaviour
     {
         i = this;
     }
+
+    private void Update()
+    {
+        if (PanelsManager.i.GetCurrentPanelName() == "GameEnd") 
+        {
+            UpdateText();
+        }
+    }
     
     public void Do() {
         PanelsManager.i.SelectPanel("GameEnd", false);
+    }
 
+    private void UpdateText()
+    {
         Stats s = GameManager.i.gameStats;
-
         bestScoreText.text = $"Word with best score: {Util.DecorateArgument(s.bestScoreWord)} ({Util.DecorateArgument(s.bestScore)} points)";
         wordCountText.text = $"{Util.DecorateArgument(s.wordCount)} words written";
 

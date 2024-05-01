@@ -19,15 +19,20 @@ public class Key : MonoBehaviour
 
     public System.Action<char> onPress;
 
-    [SerializeField] private Image improveImage;
-    [SerializeField] private Color improveImageColor;
     private int lastLevel = -1;
 
     [System.NonSerialized] public bool isSelected = false;
 
-    private void Awake()
+    private void Update()
     {
-        improveImage.gameObject.SetActive(false);
+        if (isSelected)
+        {
+            background.color = selectedColor; 
+        }
+        else 
+        {
+            background.color = baseColor; 
+        }
     }
 
     public void UpdateUI() 
@@ -37,13 +42,7 @@ public class Key : MonoBehaviour
 
         if (lastLevel != -1 && Letter.level != lastLevel)
         {
-            improveImage.transform.localScale = Vector3.one;
-            LeanTween.scale(improveImage.gameObject, Vector3.one * 2, 0.7f).setEaseOutExpo();
-
-            Color targetColor = new Color(improveImageColor.r, improveImageColor.g, improveImageColor.b, 0);
-            improveImage.color = improveImageColor;
-            Util.LeanTweenImageColor(improveImage, targetColor, 0.7f).setOnComplete(() => improveImage.gameObject.SetActive(false));
-            improveImage.gameObject.SetActive(true);
+            ParticlesManager.i.CircleParticles(transform.position, 3.0f);
         }
 
         lastLevel = Letter.level;

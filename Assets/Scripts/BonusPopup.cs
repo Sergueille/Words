@@ -5,7 +5,7 @@ using TMPro;
 
 public class BonusPopup : MonoBehaviour
 {
-    public static BonusPopup i;    
+    public static BonusPopup i;
 
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI descriptionText;
@@ -22,10 +22,10 @@ public class BonusPopup : MonoBehaviour
         popupParent.SetActive(false);
     }
 
-    public void ShowPopup(BonusInfo info, System.Action onValidate, string btnText)
+    public void ShowPopup(string title, string description, System.Action onValidate, string btnText)
     {
-        nameText.text = info.name;
-        descriptionText.text = info.description;
+        nameText.text = title;
+        descriptionText.text = description;
 
         this.onValidate = onValidate;
         this.btnText.text = btnText;

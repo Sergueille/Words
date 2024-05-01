@@ -18,13 +18,13 @@ public struct Constraint
 
     public static Constraint GetRandomConstraint()
     {
-        ContraintType enumValue = (ContraintType)Random.Range(0, System.Enum.GetValues(typeof(ContraintType)).Length);
+        float rand = Random.Range(0.0f, 1.0f);
 
         Constraint res = new();
-        res.type = enumValue;
 
-        if (enumValue == ContraintType.Contains)
+        if (rand < 0.3f) // 0.3
         {
+            res.type = ContraintType.Contains;
             res.stringArg = Util.GetRandomElement(new string[] {
                 "AR", "AT", "AP", "AS", "AL", "AM", "AC", "AB", "AN", "EA", "ER", "ET", "ES", "ED", "EL", "EM", "EC", "EN", "RA", "RE", "RI", "RO", "RS", 
                 "TA", "TE", "TR", "TI", "TO", "TH", "UR", "US", "UL", "UN", "IA", "IE", "IT", "IO", "IS", "ID", "IL", "IC", "IN", "OR", "OT", "OU", "OP", 
@@ -34,29 +34,32 @@ public struct Constraint
                 "J", "Q", "X"
             });
         }
-        else if (enumValue == ContraintType.StatsWith)
+        else if (rand < 0.45f) // 0.15
         {
+            res.type = ContraintType.StatsWith;
             res.stringArg = Util.GetRandomElement(new string[] {
                 "AN", "RE", "UN", "IN", "PA", "PR", "SU", "DE", "DI", "MA", "CA", "CO", "NO",
             });
         }
-        else if (enumValue == ContraintType.EndsWith)
+        else if (rand < 0.63f) // 0.18
         {
+            res.type = ContraintType.EndsWith;
             res.stringArg = Util.GetRandomElement(new string[] {
                 "AL", "AN", "ER", "ES", "ED", "RS", "TE", "TY", "US", "IA", "IC", "ON", "ST", "SS", "LE", "LY", "NE", "NT", "NG", 
             });
         }
-        else if (enumValue == ContraintType.HasLength)
+        else if (rand < 0.78f) // 0.15
         {
+            res.type = ContraintType.HasLength;
             res.intArg = Random.Range(9, 11);
         }
-        else if (enumValue == ContraintType.ContainsNot)
+        else  // 0.22
         {
+            res.type = ContraintType.ContainsNot;
             res.stringArg = Util.GetRandomElement(new string[] {
                 "E", "T", "A", "S"
             });
         }
-        else throw new System.Exception("Branch missing!");
 
         return res;
     }

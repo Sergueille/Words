@@ -38,11 +38,69 @@ public static class Word
 }
 
 
-public class Letter 
+public class Letter : System.ICloneable, System.IComparable
 {
+    public enum Effect {
+        None, 
+        Poisonous, Doomed,
+        Doubled, Polymorphic,
+    }
+
     public char letter;
     public int level;
     public int timesUsed = 0;
+    public Effect effect;
+
+    /// <summary>
+    /// Get the score the letter will give.
+    /// </summary>
+    /// <param name="played">Is the letter played right now? If yes, wWill apply on play effects.</param>
+    public int GetScore(bool played) {
+        if (effect == Effect.Doubled) {
+            return 2 * level;
+        }
+        else if (effect == Effect.Poisonous) {
+            Debug.Log("TEEEST");
+            if (played) {
+                Util.GetRandomElement(GameManager.i.letters).level--;
+            }
+        }
+        else if (effect == Effect.Doomed) {
+            Debug.Log("TEEEST");
+            if (played) {
+                level--;
+            }
+        }
+        else if (effect == Effect.Polymorphic) {
+            Debug.Log("TEEEST");
+            return 0;
+        }
+        
+        return level;
+    }
+
+    public bool IsChar(char a) {
+        return (letter == a) || effect == Effect.Polymorphic; // FIXME: make this reflexive (?)
+    }
+
+    public bool HasNegativeEffect() {
+        return effect switch {
+            Effect.Poisonous | Effect.Doomed => true,
+            _ => false
+        };
+    }
+
+    public object Clone() {
+        return this.MemberwiseClone();
+    }
+
+    public int CompareTo(object obj)
+    {
+        if (obj is Letter) {
+            return level.CompareTo((obj as Letter).level); 
+        }
+        else return 0;
+    }
 }
 
 
