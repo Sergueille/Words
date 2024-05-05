@@ -37,6 +37,15 @@ public class DotCounter : MonoBehaviour
         SetValue(startValue);
     }
 
+    private void Update()
+    {
+        for (int i = 0; i < maxValue; i++)
+        {
+            dots[i].activeColor = activeColor;
+            dots[i].inactiveColor = inactiveColor;
+        }
+    }
+
     public void SetValue(int newValue)
     {
         currentValue = newValue;

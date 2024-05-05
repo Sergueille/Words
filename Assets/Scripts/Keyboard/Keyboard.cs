@@ -15,11 +15,17 @@ public class Keyboard : MonoBehaviour
 
     private Key[] keys;
 
-
     private void Awake()
     {
         i = this;
-        
+    }
+
+    public void Init()
+    {
+        foreach (Transform t in keyboardParent) {
+            Destroy(t.gameObject);
+        }
+
         keys = new Key[26];
 
         int keyID = 0;
@@ -40,7 +46,7 @@ public class Keyboard : MonoBehaviour
                 Key key = Instantiate(keyPrefab, lineObject.transform).gameObject.GetComponent<Key>();
                 key.letter = c;
                 key.onPress = letter => { GameManager.i.InputLetter(letter); };
-                key.UpdateUI();
+                key.UpdateUI(false);
 
                 keys[keyID] = key;
 
@@ -53,11 +59,11 @@ public class Keyboard : MonoBehaviour
         }
     }
 
-    public void UpdateAllKeys()
+    public void UpdateAllKeys(bool showParticles)
     {
         foreach (Key key in keys)
         {
-            key.UpdateUI();
+            key.UpdateUI(showParticles);
         }
     }
 

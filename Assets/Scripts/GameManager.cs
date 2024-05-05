@@ -1,10 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEditor.Animations;
+using System.Runtime.InteropServices;
 
 public class GameManager : MonoBehaviour
 {   
     public static GameManager i;
+
+    [System.NonSerialized]
+    public GameInfo gi;
     
     public int minWordLength = 3;
     public int maxWordLength = 12;
@@ -20,20 +25,16 @@ public class GameManager : MonoBehaviour
     public GameObject inputLetterPrefab;
     public Transform cameraTransform;
 
-    public List<Bonus> bonuses;
-
-    [System.NonSerialized]
-    public Letter[] letters;
-
     private InputLetter[] inputLetters;
     private string inputWord;
-    private int totalScore = -1;
     private Constraint currentConstraint;
-    private int currentLevel;
-    private int levelWords = 0;
-    private int blessingPoints = 0;
 
     private int lastCurrentScore = -1;
+
+    /// <summary>
+    /// This is the list of Bonus GameObjects. It is reconstructed from gi.bonuses on load.
+    /// </summary>
+    public List<Bonus> bonuses;
 
 
     public TextMeshProUGUI errorText;
@@ -43,6 +44,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI constraintText;
     public DotCounter wordsCounter;
     public Transform bonusParent;
+    public GameObject bonusPrefab;
     public GameObject bonusFullPanel;
     public DotCounter blessingCounter;
 
@@ -55,26 +57,11 @@ public class GameManager : MonoBehaviour
 
     public float smallDelay = 0.7f;
     public float bigDelay = 1.2f;
-
-    public Stats gameStats;
     
     private void Awake()
     {
         i = this;
-        letters = new Letter[26];
-
-        for (int i = 0; i < 26; i++) {
-            letters[i] = new Letter {
-                letter = (char)((int)'A' + i),
-                level = rareLetters.Contains((char)((int)'A' + i)) ? 2 : 1,
-            };
-        }
-
         inputWord = "";
-
-        bonuses = new List<Bonus>();
-
-        bonusFullPanel.SetActive(false);
     }
 
     private void Start() 
@@ -87,21 +74,28 @@ public class GameManager : MonoBehaviour
     {
         PanelsManager.i.SelectPanel("Main", false);
 
-        gameStats = new Stats();
+        gi = new GameInfo {
+            letters = new Letter[26],
+            gameStats = new Stats(),
+            bonuses = new BonusInfo[maxBonus],
+        };
+
+        bonusFullPanel.SetActive(false);
+
+        bonuses = new List<Bonus>();
 
         // Reset letters
         for (int i = 0; i < 26; i++) {
-            letters[i] = new Letter {
+            gi.letters[i] = new Letter {
                 letter = (char)((int)'A' + i),
-                level = rareLetters.Contains((char)((int)'A' + i)) ? 2 : 1,
+                Level = rareLetters.Contains((char)((int)'A' + i)) ? 2 : 1,
             };
         }
 
-        Keyboard.i.UpdateAllKeys();
+        Keyboard.i.Init();
 
         HideError(true);
 
-        bonuses.Clear();
         foreach (Transform t in bonusParent) 
         {
             Destroy(t.gameObject);
@@ -109,58 +103,55 @@ public class GameManager : MonoBehaviour
 
         SetBlessingPoints(0);
 
-        currentLevel = -1;
-        StartLevel();
+        gi.currentLevel = -1;
+        StartNewLevel();
     }
 
-    private void LevelCompleted()
+    public void LevelCompleted()
     {
-        if (blessingPoints >= blessingPointsLimit) {
+        if (gi.blessingPoints >= blessingPointsLimit) {
             ColorManager.i.SetTheme("blessing", false);
             SetBlessingPoints(0);
-            EventManager.i.Do(false, ShowMenu);
+            EventManager.i.Do(false, LevelCompleted);
+        }
+
+        if (gi.currentLevel % 2 == 0) {
+            ColorManager.i.SetTheme("bonus", false);
+            BonusManager.i.Do();
+        }
+        else if (gi.currentLevel % 4 == 3) {
+            ColorManager.i.SetTheme("curse", false);
+            EventManager.i.Do(true, StartNewLevel);
         }
         else {
-            ShowMenu();
+            ColorManager.i.SetTheme("improvement", false);
+            ImprovementManager.i.Do();
         }
-
-        void ShowMenu() {
-            if (currentLevel % 2 == 0) {
-                ColorManager.i.SetTheme("bonus", false);
-                BonusManager.i.Do(NextLevel);
-            }
-            else if (currentLevel % 4 == 3) {
-                ColorManager.i.SetTheme("curse", false);
-                EventManager.i.Do(true, NextLevel);
-            }
-            else {
-                ColorManager.i.SetTheme("improvement", false);
-                ImprovementManager.i.Do(NextLevel);
-            }
-        }
-
-        void NextLevel() {
-            PanelsManager.i.SelectPanel("Main", false);
-            StartLevel();
-        };
     }
 
-    private void StartLevel()
+    public void StartNewLevel()
     {
-        currentLevel++;
-        levelWords = 0;
-        wordsCounter.SetValue(1);
+        gi.currentLevel++;
+        gi.levelWords = 0;
+        SaveManager.SaveRun(GameInfo.State.Ingame);
+        UpdateTotalScore(0, true);
+        InitLevel();
+    } 
+
+    public void InitLevel()
+    {
+        wordsCounter.SetValue(gi.levelWords + 1);
         ChangeConstraint();
         UpdateCurrentScoreText(0);
-        UpdateTotalScore(0, true);
         UpdateTargetScoreText(false);
+        PanelsManager.i.SelectPanel("Main", false);
         ColorManager.i.SetTheme("default", false);
     } 
 
     public Letter GetLetterFromChar(char c)
     {
         char lower = char.ToLower(c);
-        return letters[(int)lower - (int)'a'];
+        return gi.letters[(int)lower - (int)'a'];
     }
 
     public void Update() 
@@ -183,6 +174,12 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Return))
         {
             SubmitWord();
+        }
+
+        // TEST
+        if (Input.GetKey(KeyCode.LeftShift) & Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.O)) 
+        {
+            SaveManager.LoadRun();
         }
 
         // Update constraint text
@@ -254,15 +251,15 @@ public class GameManager : MonoBehaviour
                 int score = ComputeWordScore(false, true);
                 yield return StartCoroutine(TriggerBonuses());
                 
-                UpdateTotalScore(totalScore + score, false);
+                UpdateTotalScore(gi.totalScore + score, false);
                 UpdateCurrentScoreText(0);
 
-                gameStats.wordCount++;
+                gi.gameStats.wordCount++;
 
                 // Check if best score
-                if (score >= gameStats.bestScore) {
-                    gameStats.bestScore = score;
-                    gameStats.bestScoreWord = inputWord;
+                if (score >= gi.gameStats.bestScore) {
+                    gi.gameStats.bestScore = score;
+                    gi.gameStats.bestScoreWord = inputWord;
                 }
 
                 // Bump letter use count
@@ -270,12 +267,19 @@ public class GameManager : MonoBehaviour
                     GetLetterFromChar(c).timesUsed++;
                 }
 
+                // Trigger OnNotPlayed
+                for (char a = 'a'; a <= 'z'; a++) {
+                    if (!inputWord.Contains(a)) {
+                        GetLetterFromChar(a).OnNotPlayed();
+                    }
+                }
+
                 ClearInput();
-                Keyboard.i.UpdateAllKeys();
+                Keyboard.i.UpdateAllKeys(true);
 
                 submissionAnimation = false;
 
-                if (totalScore >= GetLevelTargetScore())
+                if (gi.totalScore >= GetLevelTargetScore())
                 {
                     Util.PingText(totalScoreText);
                     ShakeCamera();
@@ -283,15 +287,15 @@ public class GameManager : MonoBehaviour
 
                     yield return new WaitForSeconds(smallDelay);
                     
-                    int remainingWords = wordsPerLevel - levelWords - 1;
-                    SetBlessingPoints(blessingPoints + remainingWords);
+                    int remainingWords = wordsPerLevel - gi.levelWords - 1;
+                    SetBlessingPoints(gi.blessingPoints + remainingWords);
 
                     yield return new WaitForSeconds(bigDelay);
 
                     LevelCompleted();
                     yield break;
                 }
-                else if (levelWords >= wordsPerLevel - 1)
+                else if (gi.levelWords >= wordsPerLevel - 1)
                 {
                     yield return new WaitForSeconds(bigDelay);    
                     ColorManager.i.SetTheme("game_over", false);            
@@ -299,9 +303,10 @@ public class GameManager : MonoBehaviour
                     yield break;
                 }
 
-                levelWords++;
-                wordsCounter.SetValue(levelWords + 1);
-                ChangeConstraint();
+                gi.levelWords++;
+                SaveManager.SaveRun(GameInfo.State.Ingame);
+
+                InitLevel();
             }
 
             submissionAnimation = false;
@@ -336,21 +341,21 @@ public class GameManager : MonoBehaviour
 
     private void UpdateTotalScore(int newValue, bool immediate) 
     {
-        if (totalScore == newValue) return;
+        if (gi.totalScore == newValue) return;
 
-        totalScore = newValue;
+        gi.totalScore = newValue;
 
         if (!immediate)
         {
             Util.LeanTweenShake(totalScoreText.gameObject, 25, 0.4f);
         }
 
-        totalScoreText.text = totalScore.ToString();
+        totalScoreText.text = gi.totalScore.ToString();
     }
 
-    private void UpdateTargetScoreText(bool immediate) 
+    private void UpdateTargetScoreText(bool immediate)
     {
-        targetScoreText.text = $"/{GetLevelTargetScore().ToString()}";
+        targetScoreText.text = $"/{GetLevelTargetScore()}";
     }
 
 
@@ -434,7 +439,7 @@ public class GameManager : MonoBehaviour
         // Create a copy of the letters, so that the modifications can be reverted
         Letter[] lettersCopy = new Letter[26];
         for (int i = 0; i < 26; i++) {
-            lettersCopy[i] = GameManager.i.letters[i].Clone() as Letter;
+            lettersCopy[i] = GameManager.i.gi.letters[i].Clone() as Letter;
         }
 
         foreach (Bonus bonus in bonuses)
@@ -448,7 +453,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Put the old letters back!
-        GameManager.i.letters = lettersCopy;
+        gi.letters = lettersCopy;
 
         return total;
     }
@@ -460,7 +465,7 @@ public class GameManager : MonoBehaviour
             BonusAction a = bonus.ScoreWithInterface(inputWord, false);
 
             if (a.isAffected) {
-                Keyboard.i.UpdateAllKeys();
+                Keyboard.i.UpdateAllKeys(true);
                 ParticlesManager.i.CircleParticles(bonus.transform.position, 2.5f);
                 ShakeCamera();
                 yield return new WaitForSeconds(smallDelay);
@@ -478,7 +483,7 @@ public class GameManager : MonoBehaviour
 
     private int GetLevelTargetScore()
     {
-        return Mathf.FloorToInt(scoreExpMultiplier * Mathf.Exp(currentLevel * scoreExpSpeed));
+        return Mathf.FloorToInt(scoreExpMultiplier * Mathf.Exp(gi.currentLevel * scoreExpSpeed));
     }
 
     public void RemoveBonus(Bonus bonus)
@@ -539,18 +544,52 @@ public class GameManager : MonoBehaviour
             return true;
         }
     }
+    
+    public void CreateBonusUIFromGameInfo()
+    {
+        foreach (Transform child in bonusParent) 
+        {
+            Destroy(child.gameObject);
+        }
+
+        bonuses.Clear();
+
+        foreach (BonusInfo info in gi.bonuses) 
+        {
+            Bonus b = Instantiate(bonusPrefab, bonusParent).GetComponent<Bonus>();
+            AddBonus(b);
+        }
+    }
 
     public bool AreCharsEqual(char a, char b) {
+
         a = char.ToLower(a);
         b = char.ToLower(b);
-        return a == b || (
-            (a > 'a' && a < 'z') && 
-            (GetLetterFromChar(a).effect == Letter.Effect.Polymorphic || GetLetterFromChar(b).effect == Letter.Effect.Polymorphic)
-        );
+
+        if (a < 'a' || a > 'z') return a == b;
+
+        bool near = b == a - 1 || b == a || b == a + 1;
+
+        if (GetLetterFromChar(a).effect == Letter.Effect.Polymorphic)
+        {
+            if (GetLetterFromChar(b).effect == Letter.Effect.Polymorphic) 
+            {
+                // Both polymorphic
+                return b == a - 2 || near || b == a + 2;
+            }
+            
+            return near;
+        }
+        else if (GetLetterFromChar(b).effect == Letter.Effect.Polymorphic)
+        {
+            return near;
+        }
+
+        return a == b;
     }
 
     public void ImproveLetter(char c) {
-        GetLetterFromChar(c).level += 1;
+        GetLetterFromChar(c).Level += 1;
     }
 
     public void ShakeCamera()
@@ -564,17 +603,41 @@ public class GameManager : MonoBehaviour
     public Letter GetNthMostImprovedLetter(int n) 
     {
         Letter[] copy = new Letter[26]; 
-        System.Array.Copy(letters, 0, copy, 0, 26);
+        System.Array.Copy(gi.letters, 0, copy, 0, 26);
         System.Array.Sort(copy);
 
         return copy[26 - n];
     }
 
-    private void SetBlessingPoints(int newValue) 
+    public void SetBlessingPoints(int newValue) 
     {
-        blessingPoints = newValue;
-        blessingCounter.SetValue(blessingPoints);
+        gi.blessingPoints = newValue;
+        blessingCounter.SetValue(gi.blessingPoints);
     }
 }
 
+[StructLayout(LayoutKind.Sequential)]
+public struct GameInfo {
+    public enum State {
+        Ingame, Improvement, Bonus, Curse, Blessing 
+    }
+
+    public State state;
+    public int currentLevel;
+
+    [MarshalAs(UnmanagedType.ByValArray)]
+    public BonusInfo[] bonuses;
+    
+    [MarshalAs(UnmanagedType.ByValArray)]
+    public Letter[] letters;
+
+    public Random.State randomState;
+    public Stats gameStats;
+
+    public int levelWords;
+    public int totalScore;
+    public int blessingPoints;
+
+    public string currentPanelName;
+}
 

@@ -27,9 +27,11 @@ public class EventManager : MonoBehaviour
 
             if (curse) {
                 titleText.text = "Pick a curse:";
+                SaveManager.SaveRun(GameInfo.State.Curse);
             }
             else {
                 titleText.text = "Pick a blessing:";
+                SaveManager.SaveRun(GameInfo.State.Blessing);
             }
 
             bool finished = false;

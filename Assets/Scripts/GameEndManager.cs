@@ -29,14 +29,14 @@ public class GameEndManager : MonoBehaviour
 
     private void UpdateText()
     {
-        Stats s = GameManager.i.gameStats;
+        Stats s = GameManager.i.gi.gameStats;
         bestScoreText.text = $"Word with best score: {Util.DecorateArgument(s.bestScoreWord)} ({Util.DecorateArgument(s.bestScore)} points)";
         wordCountText.text = $"{Util.DecorateArgument(s.wordCount)} words written";
 
         char mostUsedLetter = '\0';
         int mostUsedLetterUses = 0;
-        for (int i = 0; i < GameManager.i.letters.Length; i++) {
-            Letter l = GameManager.i.letters[i];
+        for (int i = 0; i < GameManager.i.gi.letters.Length; i++) {
+            Letter l = GameManager.i.gi.letters[i];
             if (l.timesUsed >= mostUsedLetterUses) {
                 mostUsedLetterUses = l.timesUsed;
                 mostUsedLetter = l.letter;

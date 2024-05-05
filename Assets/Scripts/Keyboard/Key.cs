@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.ComponentModel.Design;
 
 public class Key : MonoBehaviour
 {
@@ -16,12 +17,27 @@ public class Key : MonoBehaviour
     public Image background;
     public Color baseColor;
     public Color selectedColor;
+    public Color doomedColor;
+    public float levelTextShakeAmount;
+
+    public ParticleSystem poisonParticles;
+    public ParticleSystem electricParticles;
+    public ParticleSystem fireParticles;
+    public Image lockedIcon;
 
     public System.Action<char> onPress;
 
     private int lastLevel = -1;
+    private Vector3 levelTextInitialPosition;
 
     [System.NonSerialized] public bool isSelected = false;
+
+    private IEnumerator<object> Start()
+    {
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        levelTextInitialPosition = levelText.transform.localPosition;
+    }
 
     private void Update()
     {
@@ -31,21 +47,53 @@ public class Key : MonoBehaviour
         }
         else 
         {
-            background.color = baseColor; 
+            if (Letter.effect == Letter.Effect.Doomed)
+            {
+                background.color = doomedColor; 
+            }
+            else
+            {
+                background.color = baseColor; 
+            }
         }
     }
 
-    public void UpdateUI() 
+    public void UpdateUI(bool particles) 
     {
         letterText.text = letter.ToString();
-        levelText.text = Letter.level.ToString();
 
-        if (lastLevel != -1 && Letter.level != lastLevel)
+        if (Letter.effect == Letter.Effect.Doubled)
         {
-            ParticlesManager.i.CircleParticles(transform.position, 3.0f);
+            levelText.text = $"{Letter.Level}x2";
+        }
+        else if (Letter.effect == Letter.Effect.Polymorphic)
+        {
+            levelText.text = $"??";
+        }
+        else
+        {
+            levelText.text = Letter.Level.ToString();
         }
 
-        lastLevel = Letter.level;
+        if (particles && Letter.Level != lastLevel)
+        {
+            if (Letter.Level < lastLevel)
+            {
+                levelText.transform.localPosition = levelTextInitialPosition + Vector3.right * levelTextShakeAmount;
+                LeanTween.moveLocalX(levelText.gameObject, levelTextInitialPosition.x, 0.8f).setEaseOutElastic();
+            }   
+            else if (Letter.Level > lastLevel)
+            {
+                ParticlesManager.i.CircleParticles(transform.position, 3.0f);
+            }
+        }
+
+        poisonParticles.gameObject.SetActive(Letter.effect == Letter.Effect.Poisonous);
+        electricParticles.gameObject.SetActive(Letter.effect == Letter.Effect.Electric);
+        fireParticles.gameObject.SetActive(Letter.effect == Letter.Effect.Burning);
+        lockedIcon.gameObject.SetActive(Letter.effect == Letter.Effect.Locked);
+
+        lastLevel = Letter.Level;
     }
 
     public void OnPress() 

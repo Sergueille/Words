@@ -17,13 +17,15 @@ public class BonusManager : MonoBehaviour
        i = this;
     }
     
-    public void Do(System.Action onFinished)
+    public void Do()
     {
         StartCoroutine(Coroutine());
 
         IEnumerator<WaitUntil> Coroutine() 
         {
             PanelsManager.i.SelectPanel("Bonus", false);
+            SaveManager.SaveRun(GameInfo.State.Bonus);
+
             finished = false;
 
             for (int i = 0; i < choiceCount; i++) 
@@ -46,7 +48,7 @@ public class BonusManager : MonoBehaviour
                 Destroy(child.gameObject);
             }
 
-            onFinished();
+            GameManager.i.StartNewLevel();
         }
     }
 

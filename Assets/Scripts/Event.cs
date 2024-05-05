@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-using EventSpawner = Util.Spawner<Event.EventInfo>;
+using EventSpawner = Util.Spawner<System.Func<Event.EventInfo>>;
 
 public class Event : MonoBehaviour
 {
@@ -20,16 +20,16 @@ public class Event : MonoBehaviour
     }
 
     public static EventInfo GetRandomCurse() {
-        return Util.GetRandomWithSpawners<Event.EventInfo>(new EventSpawner[] {
+        return Util.GetRandomWithSpawners(new EventSpawner[] {
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
+                data = () => new EventInfo {
                     name = "Vowel decrementation",
                     description = "Decrement the level of every vowel.",
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
                             if (Util.IsVowel(a)) {
-                                GameManager.i.GetLetterFromChar(a).level--;
+                                GameManager.i.GetLetterFromChar(a).Level--;
                             }
                         }
                     }
@@ -37,31 +37,40 @@ public class Event : MonoBehaviour
             },
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
-                    name = "Consonnant decrementation",
-                    description = "Decrement the level of every consonnant.",
+                data = () => new EventInfo {
+                    name = "Consonant decrementation",
+                    description = "Decrement the level of every consonant.",
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
                             if (Util.IsConsonant(a)) {
-                                GameManager.i.GetLetterFromChar(a).level--;
+                                GameManager.i.GetLetterFromChar(a).Level--;
                             }
                         }
                     }
                 }
             },
             new EventSpawner {
-                weight = 1.2f,
-                data = new EventInfo {
+                weight = 1.0f,
+                data = () => new EventInfo {
                     name = "Poisoning",
-                    description = "Give the Poisonous effect to the most improved letter. Each time the letter scores, a random letter looses a level.",
+                    description = "Give the Poisonous effect to the most improved letter with no effect. Each time the letter scores, a random letter looses a level.",
                     onCall = () => {
-                        GameManager.i.GetNthMostImprovedLetter(1).effect = Letter.Effect.Poisonous; 
+                        int i = 1;
+                        while (i <= 26)
+                        {
+                            Letter l = GameManager.i.GetNthMostImprovedLetter(i);
+                            if (l.effect == Letter.Effect.None)
+                            {
+                                l.effect = Letter.Effect.Poisonous; 
+                                break;
+                            }
+                        }
                     }
                 }
             },
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
+                data = () => new EventInfo {
                     name = "Doom",
                     description = "Give the Doomed effect to the third most improved letter. Each time the letter scores, it looses a level.",
                     onCall = () => {
@@ -71,84 +80,119 @@ public class Event : MonoBehaviour
             },
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
+                data = () => new EventInfo {
                     name = "Shuffle",
-                    description = "Level of the letters are shuffled (most impoved letters will receive the lowest levels).",
+                    description = "Level of the letters are shuffled (most improved letters will receive the lowest levels).",
                     onCall = () => {
                         for (int i = 0; i < 13; i++) {
                             Letter a = GameManager.i.GetNthMostImprovedLetter(i + 1);
                             Letter b = GameManager.i.GetNthMostImprovedLetter(26 - i);
 
-                            int tmp = a.level;
-                            a.level = b.level;
-                            b.level = tmp;
+                            int tmp = a.Level;
+                            a.Level = b.Level;
+                            b.Level = tmp;
                         }
                     }
                 }
             },
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
+                data = () => new EventInfo {
                     name = "Tax",
-                    description = "The most impoved letter looses 4 levels.",
+                    description = "The most improved letter level will be multiplied by 0.7 (rounded down).",
                     onCall = () => {
-                        GameManager.i.GetNthMostImprovedLetter(1).level -= 4; 
+                        Letter l = GameManager.i.GetNthMostImprovedLetter(1);
+                        l.Level = Mathf.FloorToInt(0.7f * l.Level); 
                     }
                 }
             },
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
+                data = () => new EventInfo {
                     name = "Average",
-                    description = "Computes the average level of all letters (rouded down), then each letter will have this level.",
+                    description = "Computes the average level of all letters (rounded down), then each letter will have this level.",
                     onCall = () => {
                         int sum = 0;
                         for (char a = 'a'; a <= 'z'; a++) {
-                            sum += GameManager.i.GetLetterFromChar(a).level;
+                            sum += GameManager.i.GetLetterFromChar(a).Level;
                         }
 
                         int average = sum / 26;
 
                         for (char a = 'a'; a <= 'z'; a++) {
-                            GameManager.i.GetLetterFromChar(a).level = average;
+                            GameManager.i.GetLetterFromChar(a).Level = average;
                         }
                     }
                 }
             },
             new EventSpawner {
-                weight = 0.5f,
-                data = new EventInfo {
+                weight = 0.7f,
+                data = () => new EventInfo {
                     name = "Left destruction",
-                    description = "Destroys the leftmost bonus.",
+                    description = "Destroys the two leftmost bonuses.",
                     onCall = () => {
                         if (GameManager.i.bonuses.Count > 0) {
-                            GameManager.i.bonuses.RemoveAt(0);
+                            GameManager.i.RemoveBonus(GameManager.i.bonuses[0]);
+                        }
+
+                        if (GameManager.i.bonuses.Count > 0) {
+                            GameManager.i.RemoveBonus(GameManager.i.bonuses[0]);
                         }
                     }
                 }
             },
             new EventSpawner {
-                weight = 0.5f,
-                data = new EventInfo {
-                    name = "Right estruction",
-                    description = "Destroys the rightmost bonus.",
+                weight = 0.7f,
+                data = () => new EventInfo {
+                    name = "Right destruction",
+                    description = "Destroys the two rightmost bonuses.",
                     onCall = () => {
                         if (GameManager.i.bonuses.Count > 0) {
-                            GameManager.i.bonuses.RemoveAt(GameManager.i.bonuses.Count - 1);
+                            GameManager.i.RemoveBonus(GameManager.i.bonuses[^1]);
+                        }
+
+                        if (GameManager.i.bonuses.Count > 0) {
+                            GameManager.i.RemoveBonus(GameManager.i.bonuses[^1]);
                         }
                     }
                 }
             },
-        });
+            new EventSpawner {
+                weight = 1.5f,
+                data = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T', 'I', 'A' });
+                    return new EventInfo {
+                        name = $"Doomed {letter}",
+                        description = $"Gives the Doomed effect to {Util.DecorateArgument(letter)}. Each time the letter scores, it looses a level",
+                        onCall = () => {
+                            GameManager.i.GetLetterFromChar(letter).effect = Letter.Effect.Doomed;
+                        }
+                    };
+                }
+            },
+            new EventSpawner {
+                weight = 1.5f,
+                data = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T' });
+                    return new EventInfo {
+                        name = $"Locked {letter}",
+                        description = $"Gives the Locked effect to {Util.DecorateArgument(letter)}. The level of the letter won't change anymore.",
+                        onCall = () => {
+                            GameManager.i.GetLetterFromChar(letter).effect = Letter.Effect.Locked;
+                        }
+                    };
+                }
+            },
+        })();
     }
 
     public static EventInfo GetRandomBlessing() {
-        return Util.GetRandomWithSpawners<Event.EventInfo>(new EventSpawner[] {
+        return Util.GetRandomWithSpawners(new EventSpawner[] {
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
+                data = () => new EventInfo {
                     name = "Polymorphic letter",
-                    description = "Gives the Polymorphic effect to the lest improved letter. The letter will not score any point, but will be considered equal to all other letters.",
+                    description = "Gives the Polymorphic effect to the least improved letter. The letter will not score any point, but will be considered equal to the previous and next letter in the alphabet.",
                     onCall = () => {
                         GameManager.i.GetNthMostImprovedLetter(26).effect = Letter.Effect.Polymorphic; 
                     }
@@ -156,9 +200,9 @@ public class Event : MonoBehaviour
             },
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
+                data = () => new EventInfo {
                     name = "Doubled letter",
-                    description = "Gives the Doubled effect on the trhird most improved letter. The letter will score twice as many points.",
+                    description = "Gives the Doubled effect on the third most improved letter. The letter will score twice as many points.",
                     onCall = () => {
                         GameManager.i.GetNthMostImprovedLetter(3).effect = Letter.Effect.Doubled; 
                     }
@@ -166,23 +210,92 @@ public class Event : MonoBehaviour
             },
             new EventSpawner {
                 weight = 1.0f,
-                data = new EventInfo {
+                data = () => new EventInfo {
                     name = "Incrementation",
-                    description = "Improves every leter by one level.",
+                    description = "Improves every letter by one level.",
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
-                            GameManager.i.GetLetterFromChar(a).level++;
+                            GameManager.i.GetLetterFromChar(a).Level++;
                         }
                     }
                 }
             },
-        });
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
+                    name = "Cleaning",
+                    description = "Removes every negative effect, and letters with level that is less than 1 will have level 3.",
+                    onCall = () => {
+                        for (char a = 'a'; a <= 'z'; a++) {
+                            Letter l = GameManager.i.GetLetterFromChar(a);
+
+                            if (l.HasNegativeEffect()) {
+                                l.effect = Letter.Effect.None;
+                            }
+
+                            if (l.Level < 1) {
+                                l.Level = 3;
+                            }
+                        }
+                    }
+                }
+            },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
+                    name = "Burn",
+                    description = "Give the Burning effect to the fourth most improved letter. The letter will gain a level when used, but will loose 2 if not used in a word.",
+                    onCall = () => {
+                        GameManager.i.GetNthMostImprovedLetter(4).effect = Letter.Effect.Burning; 
+                    }
+                }
+            },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
+                    name = "Left copy",
+                    description = "Give two copies of the leftmost bonus, if enough place.",
+                    onCall = () => {
+                        if (GameManager.i.bonuses.Count > 0) {
+                            GameManager.i.AddBonus(GameManager.i.bonuses[0].Clone() as Bonus);
+                            GameManager.i.AddBonus(GameManager.i.bonuses[0].Clone() as Bonus);
+                        }
+                    }
+                }
+            },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
+                    name = "Right copy",
+                    description = "Give two copies of the rightmost bonus, if enough place.",
+                    onCall = () => {
+                        if (GameManager.i.bonuses.Count > 0) {
+                            GameManager.i.AddBonus(GameManager.i.bonuses[^1].Clone() as Bonus);
+                            GameManager.i.AddBonus(GameManager.i.bonuses[^1].Clone() as Bonus);
+                        }
+                    }
+                }
+            },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
+                    name = "",
+                    description = "Give two copies of the rightmost bonus, if enough place.",
+                    onCall = () => {
+                        if (GameManager.i.bonuses.Count > 0) {
+                            GameManager.i.AddBonus(GameManager.i.bonuses[^1].Clone() as Bonus);
+                            GameManager.i.AddBonus(GameManager.i.bonuses[^1].Clone() as Bonus);
+                        }
+                    }
+                }
+            },
+        })();
     }
 
     public void OnClick() {
         BonusPopup.i.ShowPopup(info.name, info.description, () => {
             info.onCall();
-            Keyboard.i.UpdateAllKeys();
+            Keyboard.i.UpdateAllKeys(true);
             BonusPopup.i.HidePopup();
             onCall();
         }, "Take");

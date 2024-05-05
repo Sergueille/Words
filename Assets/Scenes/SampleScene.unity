@@ -315,8 +315,21 @@ MonoBehaviour:
     - {r: 0.18135852, g: 0.107999995, b: 0.27, a: 1}
     - {r: 0.8, g: 0.8, b: 0.8, a: 1}
     - {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  - name: blessing
+    colors:
+    - {r: 0.47798917, g: 0.8, b: 0.09411764, a: 1}
+    - {r: 0.3900272, g: 0.6431373, b: 0.058823515, a: 1}
+    - {r: 0.6765074, g: 0.92156863, b: 0.21960784, a: 1}
+    - {r: 0.8679245, g: 0.40020967, b: 0, a: 1}
+    - {r: 0.5566038, g: 0.2566562, b: 0, a: 1}
+    - {r: 0.07608333, g: 0.083000004, b: 0.020750001, a: 1}
+    - {r: 0.21960837, g: 0.234, b: 0, a: 1}
+    - {r: 0.24687096, g: 0.25, b: 0.153, a: 1}
+    - {r: 0.39111277, g: 0.397, b: 0.15562402, a: 1}
+    - {r: 0.8, g: 0.8, b: 0.8, a: 1}
+    - {r: 0.5, g: 0.5, b: 0.5, a: 1}
   startTheme: default
-  transitionDuration: 1
+  transitionDuration: 1.5
 --- !u!1 &74649018
 GameObject:
   m_ObjectHideFlags: 0
@@ -1542,6 +1555,7 @@ MonoBehaviour:
   constraintText: {fileID: 1382476077}
   wordsCounter: {fileID: 4428134757534909848}
   bonusParent: {fileID: 1115202258}
+  bonusPrefab: {fileID: 2026338960752032648, guid: c7d405f9e71e74441a5023dd42cd48b0, type: 3}
   bonusFullPanel: {fileID: 1602751581}
   blessingCounter: {fileID: 1605538605}
   shakeDuration: 0.5
@@ -4834,7 +4848,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4777985899686919286, guid: 925bc5370e4c30843b4131c427d9a75c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -50
+      value: -80
       objectReference: {fileID: 0}
     - target: {fileID: 4777985899686919286, guid: 925bc5370e4c30843b4131c427d9a75c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

@@ -3,8 +3,9 @@ using UnityEngine;
 using TMPro;
 
 using BonusSpawner = Util.Spawner<System.Func<BonusInfo>>;
+using System.Runtime.InteropServices;
 
-public class Bonus : MonoBehaviour
+public class Bonus : MonoBehaviour, System.ICloneable
 {
     public BonusInfo info;
 
@@ -129,7 +130,7 @@ public class Bonus : MonoBehaviour
                             {
                                 Letter l = GameManager.i.GetLetterFromChar(c);
 
-                                if (l.level > bestLevel) bestLevel = l.level;
+                                if (l.Level > bestLevel) bestLevel = l.Level;
                             }
 
                             return new BonusAction {
@@ -145,7 +146,7 @@ public class Bonus : MonoBehaviour
                 data = () => {
                     return new BonusInfo {
                         name = "Worst copy",
-                        description = "Looks for the least improved letter in the word, then adds twice its level to the score",
+                        description = "Looks for the least improved letter in the word, then adds 3 times its level to the score",
                         onScore = (word) => {
                             int worstLevel = 100000000;
 
@@ -153,12 +154,12 @@ public class Bonus : MonoBehaviour
                             {
                                 Letter l = GameManager.i.GetLetterFromChar(c);
 
-                                if (l.level < worstLevel) worstLevel = l.level;
+                                if (l.Level < worstLevel) worstLevel = l.Level;
                             }
 
                             return new BonusAction {
                                 isAffected = true,
-                                score = 2 * worstLevel,
+                                score = 3 * worstLevel,
                             };
                         }
                     };
@@ -316,15 +317,22 @@ public class Bonus : MonoBehaviour
             new BonusSpawner {
                 weight = 1,
                 data = () => {
-                    int rand = Random.Range(7, 12);
-                    int score = 23 - rand;
+                    int rand = Random.Range(7, 10);
 
                     return new BonusInfo {
                         name = $"{rand} letters",
-                        description = $"If the word is exactly {rand} letters long, adds {score} points to score.",
+                        description = $"If the word is exactly {rand} letters long, gives half the points of the word (not counting other bonuses).",
                         onScore = (word) => {  
                             if (word.Length == rand)
                             {
+                                int score = 0;
+                                foreach (char c in word)
+                                {
+                                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
+                                }
+
+                                score /= 2;
+
                                 return new BonusAction {
                                     isAffected = true,
                                     score = score,
@@ -353,13 +361,11 @@ public class Bonus : MonoBehaviour
 
                             foreach (char c in word)
                             {
-                                if (GameManager.i.GetLetterFromChar(c).effect == Letter.Effect.Polymorphic) {
-                                    for (int i = 0; i < 26; i++) {
+                                for (int i = 0; i < 26; i++)
+                                {
+                                    if (GameManager.i.AreCharsEqual((char)(i + 'A'), c)) {
                                         counts[i]++;
                                     }
-                                }
-                                else {
-                                    counts[c - 'A']++;
                                 }
                             }
 
@@ -426,7 +432,7 @@ public class Bonus : MonoBehaviour
                             {   
                                 if (GameManager.i.AreCharsEqual(c, letter))
                                 {
-                                    if (l.level % 2 == 0)
+                                    if (l.Level % 2 == 0)
                                     {
                                         GameManager.i.ImproveLetter(letter);
                                         GameManager.i.ImproveLetter(letter);
@@ -460,9 +466,9 @@ public class Bonus : MonoBehaviour
                             for (int i = 0; i < word.Length; i++)
                             {
                                 Letter letter = GameManager.i.GetLetterFromChar(word[i]);
-                                if (letter.level < least)
+                                if (letter.Level < least)
                                 {
-                                    least = letter.level;
+                                    least = letter.Level;
                                     leastId = i;
                                 }
                             }
@@ -596,19 +602,19 @@ public class Bonus : MonoBehaviour
                             foreach (char c in word) {
                                 Letter l = GameManager.i.GetLetterFromChar(c);
 
-                                if (l.level > highestLevel) {
-                                    highestLevel = l.level;
+                                if (l.Level > highestLevel) {
+                                    highestLevel = l.Level;
                                     highest = c;
                                 }
 
-                                if (l.level < lowestLevel) {
-                                    lowestLevel = l.level;
+                                if (l.Level < lowestLevel) {
+                                    lowestLevel = l.Level;
                                     lowest = c;
                                 }
                             }
 
                             GameManager.i.ImproveLetter(highest);
-                            GameManager.i.GetLetterFromChar(lowest).level -= 1;
+                            GameManager.i.GetLetterFromChar(lowest).Level -= 1;
 
                             return new BonusAction {
                                 isAffected = true,
@@ -623,22 +629,57 @@ public class Bonus : MonoBehaviour
                 data = () => {
                     return new BonusInfo {
                         name = "Relative numbers",
-                        description = $"Improves letters which level is strictly less than 1. Gives 70 points per letter improved.",
+                        description = $"Improves letters which level is strictly less than 1. Gives 25 points per letter improved.",
                         onScore = (word) => {
                             int improvementCount = 0;
 
                             foreach (char c in word) {
                                 Letter l = GameManager.i.GetLetterFromChar(c);
 
-                                if (l.level <= 0) {
+                                if (l.Level <= 0) {
                                     improvementCount++;
-                                    l.level++;
+                                    l.Level++;
                                 }
                             }
 
                             return new BonusAction {
                                 isAffected = improvementCount > 0,
-                                score = improvementCount * 70,
+                                score = improvementCount * 25,
+                            };
+                        }
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'P', 'G', 'Y' });
+
+                    return new BonusInfo {
+                        name = $"Charged {letter}",
+                        description = $"Gives the Electric effect to letters located after every {Util.DecorateArgument(letter)}. The next time they are played, Electric letters will loose their effect and give 10 additional points.",
+                        onScore = (word) => {
+                            int improvementCount = 0;
+                            bool next = false;
+                            Letter baseLetter = GameManager.i.GetLetterFromChar(letter);
+
+                            foreach (char c in word) {
+                                Letter l = GameManager.i.GetLetterFromChar(c);
+
+                                if (next) {
+                                    l.effect = Letter.Effect.Electric;
+                                    improvementCount++;
+                                    next = false;
+                                }
+
+                                if (l == baseLetter) {
+                                    next = true;
+                                }
+                            }
+
+                            return new BonusAction {
+                                isAffected = improvementCount > 0,
+                                score = 0,
                             };
                         }
                     };
@@ -695,8 +736,14 @@ public class Bonus : MonoBehaviour
             LeanTween.move(scoreText.gameObject, scoreTextDown.position, 0.4f).setEaseInQuad();
         }
     }
+
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
 
+[StructLayout(LayoutKind.Sequential)]
 public class BonusInfo
 {
     public string name;
@@ -704,6 +751,7 @@ public class BonusInfo
     public System.Func<string, BonusAction> onScore; // TODO: make sure it's upper
 }
 
+[StructLayout(LayoutKind.Sequential)]
 public struct BonusAction
 {
     public bool isAffected;

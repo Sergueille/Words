@@ -18,13 +18,14 @@ public class ImprovementManager : MonoBehaviour
        i = this;
     }
     
-    public void Do(System.Action onFinished)
+    public void Do()
     {
         StartCoroutine(Coroutine());
 
         IEnumerator<WaitUntil> Coroutine() 
         {
             PanelsManager.i.SelectPanel("ImproveLetter", false);
+            SaveManager.SaveRun(GameInfo.State.Improvement);
 
             lettersToImprove = new List<char>();
             for (int i = 0; i < choiceCount; i++) 
@@ -42,24 +43,24 @@ public class ImprovementManager : MonoBehaviour
                         lettersToImprove.Remove(c); 
                     }
                 };
-                key.UpdateUI();
+                key.UpdateUI(false);
             }
 
             yield return new WaitUntil(() => lettersToImprove.Count >= improvementsCount);
 
             foreach (char c in lettersToImprove)
             {
-                GameManager.i.GetLetterFromChar(c).level += 1;
+                GameManager.i.GetLetterFromChar(c).Level += 1;
             }
 
-            Keyboard.i.UpdateAllKeys();
+            Keyboard.i.UpdateAllKeys(true);
 
             foreach (Transform child in lettersParent)
             {
                 Destroy(child.gameObject);
             }
 
-            onFinished();
+            GameManager.i.StartNewLevel();
         }
     }
 }

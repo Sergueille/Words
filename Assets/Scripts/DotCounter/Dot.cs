@@ -29,6 +29,17 @@ public class Dot : MonoBehaviour
         isActive = false;
     }
 
+    private void Update()
+    {
+        if (isActive)
+        {
+            dotImage.color = activeColor;
+        }
+        else {
+            dotImage.color = inactiveColor;
+        }
+    }
+
     public void SetActive(bool newValue)
     {
         isActive = newValue;
@@ -36,12 +47,10 @@ public class Dot : MonoBehaviour
         if (isActive)
         {
             LeanTween.scale(dotImage.gameObject, activeScale * Vector3.one, transitionDuration).setEaseOutElastic();
-            Util.LeanTweenImageColor(dotImage, activeColor, transitionDuration);
         }
         else
         {
             LeanTween.scale(dotImage.gameObject, inactiveScale * Vector3.one, transitionDuration).setEaseOutElastic();
-            Util.LeanTweenImageColor(dotImage, inactiveColor, transitionDuration);
         }
     }
 }
