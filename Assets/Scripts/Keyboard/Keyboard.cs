@@ -46,7 +46,6 @@ public class Keyboard : MonoBehaviour
                 Key key = Instantiate(keyPrefab, lineObject.transform).gameObject.GetComponent<Key>();
                 key.letter = c;
                 key.onPress = letter => { GameManager.i.InputLetter(letter); };
-                key.UpdateUI(false);
 
                 keys[keyID] = key;
 

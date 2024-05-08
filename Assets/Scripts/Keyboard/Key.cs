@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.ComponentModel.Design;
 
 public class Key : MonoBehaviour
 {
@@ -33,7 +32,11 @@ public class Key : MonoBehaviour
     [System.NonSerialized] public bool isSelected = false;
 
     private IEnumerator<object> Start()
-    {
+    {        
+        poisonParticles.gameObject.SetActive(false);
+        electricParticles.gameObject.SetActive(false);
+        fireParticles.gameObject.SetActive(false);
+        lockedIcon.gameObject.SetActive(false);
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
         levelTextInitialPosition = levelText.transform.localPosition;
@@ -47,7 +50,7 @@ public class Key : MonoBehaviour
         }
         else 
         {
-            if (Letter.effect == Letter.Effect.Doomed)
+            if (Letter != null && Letter.effect == Letter.Effect.Doomed)
             {
                 background.color = doomedColor; 
             }

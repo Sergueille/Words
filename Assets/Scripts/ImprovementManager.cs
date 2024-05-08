@@ -25,6 +25,7 @@ public class ImprovementManager : MonoBehaviour
         IEnumerator<WaitUntil> Coroutine() 
         {
             PanelsManager.i.SelectPanel("ImproveLetter", false);
+            ColorManager.i.SetTheme("improvement", false);
             SaveManager.SaveRun(GameInfo.State.Improvement);
 
             lettersToImprove = new List<char>();

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
@@ -19,11 +18,10 @@ public class Bonus : MonoBehaviour, System.ICloneable
 
     private bool isOscillating = false; 
 
-    public void Init()
+    public void Init(BonusInfo info)
     {
-        info = GetRandomBonus();
-        nameText.text = info.name;
-        scoreText.transform.position = scoreTextDown.position;
+        this.info = info;
+        nameText.text = GetName();
     }
 
     private void Update()
@@ -54,27 +52,8 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     });
 
                     return new BonusInfo {
-                        name = pair,
-                        description = $"If the word contains {Util.DecorateArgument(pair)}, improves these letters by one level",
-                        onScore = (word) => {
-                            if (word.Contains(pair))
-                            {
-                                GameManager.i.ImproveLetter(pair[0]);
-                                GameManager.i.ImproveLetter(pair[1]);
-
-                                return new BonusAction {
-                                    isAffected = true,
-                                    score = 0,
-                                };
-                            }
-                            else
-                            {
-                                return new BonusAction {
-                                    isAffected = false,
-                                    score = 0,
-                                };
-                            }
-                        }
+                        type = BonusType.TwoLetters,
+                        stringArg = pair,
                     };
                 }
             },
@@ -82,38 +61,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 0.8f,
                 data = () => {
                     return new BonusInfo {
-                        name = "Consonants",
-                        description = "Improves a random consonant in the word",
-                        onScore = (word) => {
-                            int consonantCount = 0;
-                            foreach (char c in word)
-                            {
-                                if (!Util.IsVowel(c)) consonantCount++;
-                            }
-
-                            int randCons = Random.Range(0, consonantCount);
-                            int i = 0;
-                            foreach (char c in word)
-                            {
-                                if (!Util.IsVowel(c)) 
-                                {
-                                    if (i == randCons) {
-                                        GameManager.i.ImproveLetter(c);
-                                        return new BonusAction {
-                                            isAffected = true,
-                                            score = 0,
-                                        };
-                                    }
-
-                                    i++;
-                                }                            
-                            }
-
-                            return new BonusAction {
-                                isAffected = false,
-                                score = 0,
-                            };
-                        }
+                        type = BonusType.Consonants,
                     };
                 }
             },
@@ -121,23 +69,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 1,
                 data = () => {
                     return new BonusInfo {
-                        name = "Best copy",
-                        description = "Looks for the most improved letter in the word, then adds its level to the score",
-                        onScore = (word) => {
-                            int bestLevel = 0;
-
-                            foreach (char c in word)
-                            {
-                                Letter l = GameManager.i.GetLetterFromChar(c);
-
-                                if (l.Level > bestLevel) bestLevel = l.Level;
-                            }
-
-                            return new BonusAction {
-                                isAffected = true,
-                                score = bestLevel,
-                            };
-                        }
+                        type = BonusType.BestCopy
                     };
                 }
             },
@@ -145,23 +77,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 1,
                 data = () => {
                     return new BonusInfo {
-                        name = "Worst copy",
-                        description = "Looks for the least improved letter in the word, then adds 3 times its level to the score",
-                        onScore = (word) => {
-                            int worstLevel = 100000000;
-
-                            foreach (char c in word)
-                            {
-                                Letter l = GameManager.i.GetLetterFromChar(c);
-
-                                if (l.Level < worstLevel) worstLevel = l.Level;
-                            }
-
-                            return new BonusAction {
-                                isAffected = true,
-                                score = 3 * worstLevel,
-                            };
-                        }
+                        type = BonusType.WorstCopy,
                     };
                 }
             },
@@ -169,31 +85,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 0.8f,
                 data = () => {
                     return new BonusInfo {
-                        name = "Short word",
-                        description = "If the word is 4 letters long, improves the 4 letters.",
-                        onScore = (word) => {
-                            if (word.Length == 4)
-                            {
-                                char[] lettersToImprove = new char[4];
-
-                                for (int i = 0; i < 4; i++)
-                                {
-                                    GameManager.i.ImproveLetter(word[i]);
-                                }
-
-                                return new BonusAction {
-                                    isAffected = true,
-                                    score = 0,
-                                };
-                            }
-                            else
-                            {
-                                return new BonusAction {
-                                    isAffected = false,
-                                    score = 0,
-                                };
-                            }
-                        }
+                        type = BonusType.ShortWord,
                     };
                 }
             },
@@ -201,29 +93,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 0.8f,
                 data = () => {
                     return new BonusInfo {
-                        name = "Rare letters",
-                        description = $"Improves twice the level of every {Util.DecorateArgument('Q')}, {Util.DecorateArgument('J')}, {Util.DecorateArgument('X')} and {Util.DecorateArgument('Z')} in the word, and give 10 points if one is present",
-                        onScore = (word) => {
-                            bool improved = false;
-
-                            foreach (char c in word)
-                            {
-                                if (GameManager.i.AreCharsEqual(c, 'Q')
-                                 || GameManager.i.AreCharsEqual(c, 'J')
-                                 || GameManager.i.AreCharsEqual(c, 'Z')
-                                 || GameManager.i.AreCharsEqual(c, 'X'))
-                                {
-                                    improved = true;
-                                    GameManager.i.ImproveLetter(c);
-                                    GameManager.i.ImproveLetter(c);
-                                }
-                            }    
-                        
-                            return new BonusAction {
-                                isAffected = improved,
-                                score = improved ? 10 : 0,
-                            };
-                        }
+                        type = BonusType.RareLetters,
                     };
                 }
             },
@@ -231,28 +101,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 0.8f,
                 data = () => {
                     return new BonusInfo {
-                        name = "Double",
-                        description = $"If the word contains two identical adjacent letters, improve the level of the letter.",
-                        onScore = (word) => {
-                            bool improved = false;
-
-                            char last = '\0';
-                            foreach (char c in word)
-                            {
-                                if (GameManager.i.AreCharsEqual(last, c))
-                                {
-                                    improved = true;
-                                    GameManager.i.ImproveLetter(c);
-                                }
-
-                                last = c;
-                            }    
-                        
-                            return new BonusAction {
-                                isAffected = improved,
-                                score = 0,
-                            };
-                        }
+                        type = BonusType.Double,
                     };
                 }
             },
@@ -260,25 +109,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 1,
                 data = () => {
                     return new BonusInfo {
-                        name = "The initial",
-                        description = $"Improves the first letter of the word",
-                        onScore = (word) => {  
-                            if (word.Length > 0) 
-                            {
-                                GameManager.i.ImproveLetter(word[0]);
-                                return new BonusAction {
-                                    isAffected = true,
-                                    score = 0,
-                                };
-                            }
-                            else
-                            {
-                                return new BonusAction {
-                                    isAffected = false,
-                                    score = 0,
-                                };
-                            }
-                        }
+                        type = BonusType.Initial,
                     };
                 }
             },
@@ -286,31 +117,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 0.7f,
                 data = () => {
                     return new BonusInfo {
-                        name = "More vowels",
-                        description = "If the word has strictly more vowels than consonants, improves every letter of the word",
-                        onScore = (word) => {  
-                            int vowelCount = Util.CountVowels(word);
-                            int consonantCount = Util.CountConsonant(word);
-
-                            if (vowelCount > consonantCount)
-                            {
-                                foreach (char c in word) {
-                                    GameManager.i.ImproveLetter(c);
-                                }
-
-                                return new BonusAction {
-                                    isAffected = true,
-                                    score = 0
-                                };
-                            }
-                            else
-                            {
-                                return new BonusAction {
-                                    isAffected = false,
-                                    score = 0,
-                                };
-                            }
-                        }
+                        type = BonusType.MoreVowels,
                     };
                 }
             },
@@ -320,32 +127,8 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     int rand = Random.Range(7, 10);
 
                     return new BonusInfo {
-                        name = $"{rand} letters",
-                        description = $"If the word is exactly {rand} letters long, gives half the points of the word (not counting other bonuses).",
-                        onScore = (word) => {  
-                            if (word.Length == rand)
-                            {
-                                int score = 0;
-                                foreach (char c in word)
-                                {
-                                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
-                                }
-
-                                score /= 2;
-
-                                return new BonusAction {
-                                    isAffected = true,
-                                    score = score,
-                                };
-                            }
-                            else
-                            {
-                                return new BonusAction {
-                                    isAffected = false,
-                                    score = 0,
-                                };
-                            }
-                        }
+                        type = BonusType.Length,
+                        intArg = rand,
                     };
                 }
             },
@@ -353,36 +136,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 1,
                 data = () => {
                     return new BonusInfo {
-                        name = $"Triple",
-                        description = $"If the word contains three identical letters, improve the level of the letter.",
-                        onScore = (word) => { 
-                            int[] counts = new int[26];
-                            bool improved = false;
-
-                            foreach (char c in word)
-                            {
-                                for (int i = 0; i < 26; i++)
-                                {
-                                    if (GameManager.i.AreCharsEqual((char)(i + 'A'), c)) {
-                                        counts[i]++;
-                                    }
-                                }
-                            }
-
-                            for (int i = 0; i < 26; i++)
-                            {
-                                if (counts[i] >= 3)
-                                {
-                                    improved = true;
-                                    GameManager.i.ImproveLetter((char)(i + 'A'));
-                                }
-                            }
-
-                            return new BonusAction {
-                                isAffected = improved,
-                                score = 0,
-                            };
-                        }
+                        type = BonusType.Triple,
                     };
                 }
             },
@@ -390,30 +144,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 0.9f,
                 data = () => {
                     return new BonusInfo {
-                        name = $"Frequent vowel",
-                        description = $"Looks for the vowel that appeared the most in the word, then adds 6 points per time it appeared",
-                        onScore = (word) => {  
-                            int[] counts = new int[26];
-
-                            foreach (char c in word)
-                            {
-                                counts[c - 'A']++;
-                            }
-
-                            int best = 0;
-                            for (int i = 0; i < 26; i++)
-                            {
-                                if (Util.IsVowel((char)(i + 'A')) && best < counts[i])
-                                {
-                                    best = counts[i];
-                                }
-                            }
-
-                            return new BonusAction {
-                                isAffected = best > 0,
-                                score = 6 * best,
-                            };
-                        }
+                        type = BonusType.FrequentVowel,
                     };
                 }
             },
@@ -423,34 +154,8 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     char letter = Util.GetRandomElement(new char[] { 'V', 'B', 'K' });
 
                     return new BonusInfo {
-                        name = $"Emergency {letter}",
-                        description = $"If the word contains {Util.DecorateArgument(letter)} and the level of the letter is even, improves its level by 3 and gives 30 points.",
-                        onScore = (word) => {  
-                            Letter l = GameManager.i.GetLetterFromChar(letter);
-
-                            foreach (char c in word)
-                            {   
-                                if (GameManager.i.AreCharsEqual(c, letter))
-                                {
-                                    if (l.Level % 2 == 0)
-                                    {
-                                        GameManager.i.ImproveLetter(letter);
-                                        GameManager.i.ImproveLetter(letter);
-                                        GameManager.i.ImproveLetter(letter);
-
-                                        return new BonusAction {
-                                            isAffected = true,
-                                            score = 30,
-                                        };
-                                    }
-                                }
-                            }
-
-                            return new BonusAction {
-                                isAffected = false,
-                                score = 0,
-                            };
-                        }
+                        type = BonusType.Emergency,
+                        stringArg = letter.ToString(),
                     };
                 }
             },
@@ -458,28 +163,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 1.0f,
                 data = () => {
                     return new BonusInfo {
-                        name = "Equalizer",
-                        description = "Improves the least improved letter in the word (will improve the leftmost if multiple letters)",
-                        onScore = (word) => {
-                            int least = 100000000;
-                            int leastId = 0;
-                            for (int i = 0; i < word.Length; i++)
-                            {
-                                Letter letter = GameManager.i.GetLetterFromChar(word[i]);
-                                if (letter.Level < least)
-                                {
-                                    least = letter.Level;
-                                    leastId = i;
-                                }
-                            }
-
-                            GameManager.i.ImproveLetter(word[leastId]);
-
-                            return new BonusAction {
-                                isAffected = true,
-                                score = 0,
-                            };
-                        }
+                        type = BonusType.Equalizer,
                     };
                 }
             },
@@ -487,26 +171,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 1.0f,
                 data = () => {
                     return new BonusInfo {
-                        name = "Palindrome",
-                        description = "If the first letter and the last letter of the word are identical, improves this letter and gives 15 points",
-                        onScore = (word) => {
-                            if (GameManager.i.AreCharsEqual(word[0], word[word.Length - 1]))
-                            {
-                                GameManager.i.ImproveLetter(word[0]);
-
-                                return new BonusAction {
-                                    isAffected = true,
-                                    score = 15,
-                                };
-                            }
-                            else
-                            {
-                                return new BonusAction {
-                                    isAffected = false,
-                                    score = 0,
-                                };
-                            }
-                        }
+                        type = BonusType.Palindrome,
                     };
                 }
             },
@@ -514,25 +179,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 1.0f,
                 data = () => {
                     return new BonusInfo {
-                        name = "oOo",
-                        description = $"Improves the letters located directly after an {Util.DecorateArgument("O")}",
-                        onScore = (word) => {
-                            bool improved = false;
-                            bool lastWasO = false;
-                            foreach (char c in word) {
-                                if (lastWasO) {
-                                    improved = true;                                    
-                                    GameManager.i.ImproveLetter(c);
-                                }
-
-                                lastWasO = GameManager.i.AreCharsEqual(c, 'O');
-                            }
-
-                            return new BonusAction {
-                                isAffected = improved,
-                                score = 0,
-                            };
-                        }
+                        type = BonusType.OOO,
                     };
                 }
             },
@@ -542,23 +189,8 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     char letter = Util.GetRandomElement(new char[] { 'N', 'R', 'I' });
 
                     return new BonusInfo {
-                        name = $"{letter} everywhere",
-                        description = $"Improves every {Util.DecorateArgument(letter)} in the word. If the word doesn't contain any, -500 points.",
-                        onScore = (word) => {
-                            bool improved = false;
-                            
-                            foreach (char c in word) {
-                                if (GameManager.i.AreCharsEqual(c, letter)) {
-                                    improved = true;
-                                    GameManager.i.ImproveLetter(c);
-                                }
-                            }
-
-                            return new BonusAction {
-                                isAffected = true,
-                                score = improved ? 0 : -500,
-                            };
-                        }
+                        type = BonusType.Everywhere,
+                        stringArg = letter.ToString(),
                     };
                 }
             },
@@ -568,22 +200,8 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     char letter = Util.GetRandomElement(new char[] { 'N', 'R', 'I' });
 
                     return new BonusInfo {
-                        name = $"Forbidden {letter}",
-                        description = $"Improves {Util.DecorateArgument(letter)} by two levels. If the word contain this letter, -500 points.",
-                        onScore = (word) => {
-                            bool found = false;
-                            foreach (char c in word) {
-                                found |= c == letter;
-                            }
-
-                            GameManager.i.ImproveLetter(letter);
-                            GameManager.i.ImproveLetter(letter);
-
-                            return new BonusAction {
-                                isAffected = true,
-                                score = found ? -500 : 00,
-                            };
-                        }
+                        type = BonusType.Forbidden,
+                        stringArg = letter.ToString(),
                     };
                 }
             },
@@ -591,36 +209,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 1.0f,
                 data = () => {
                     return new BonusInfo {
-                        name = "Concentrate",
-                        description = $"Lower the level of the least improved letter in the word, and improves the level of the most improved letter in word. (Will improve the leftmost letter if many)",
-                        onScore = (word) => {
-                            char highest = '\0';
-                            int highestLevel = -9999999;
-                            char lowest = '\0';
-                            int lowestLevel = 99999999;
-
-                            foreach (char c in word) {
-                                Letter l = GameManager.i.GetLetterFromChar(c);
-
-                                if (l.Level > highestLevel) {
-                                    highestLevel = l.Level;
-                                    highest = c;
-                                }
-
-                                if (l.Level < lowestLevel) {
-                                    lowestLevel = l.Level;
-                                    lowest = c;
-                                }
-                            }
-
-                            GameManager.i.ImproveLetter(highest);
-                            GameManager.i.GetLetterFromChar(lowest).Level -= 1;
-
-                            return new BonusAction {
-                                isAffected = true,
-                                score = 0,
-                            };
-                        }
+                        type = BonusType.Concentrate,
                     };
                 }
             },
@@ -628,25 +217,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 weight = 0.7f,
                 data = () => {
                     return new BonusInfo {
-                        name = "Relative numbers",
-                        description = $"Improves letters which level is strictly less than 1. Gives 25 points per letter improved.",
-                        onScore = (word) => {
-                            int improvementCount = 0;
-
-                            foreach (char c in word) {
-                                Letter l = GameManager.i.GetLetterFromChar(c);
-
-                                if (l.Level <= 0) {
-                                    improvementCount++;
-                                    l.Level++;
-                                }
-                            }
-
-                            return new BonusAction {
-                                isAffected = improvementCount > 0,
-                                score = improvementCount * 25,
-                            };
-                        }
+                        type = BonusType.RelativeNumbers,
                     };
                 }
             },
@@ -656,32 +227,8 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     char letter = Util.GetRandomElement(new char[] { 'P', 'G', 'Y' });
 
                     return new BonusInfo {
-                        name = $"Charged {letter}",
-                        description = $"Gives the Electric effect to letters located after every {Util.DecorateArgument(letter)}. The next time they are played, Electric letters will loose their effect and give 10 additional points.",
-                        onScore = (word) => {
-                            int improvementCount = 0;
-                            bool next = false;
-                            Letter baseLetter = GameManager.i.GetLetterFromChar(letter);
-
-                            foreach (char c in word) {
-                                Letter l = GameManager.i.GetLetterFromChar(c);
-
-                                if (next) {
-                                    l.effect = Letter.Effect.Electric;
-                                    improvementCount++;
-                                    next = false;
-                                }
-
-                                if (l == baseLetter) {
-                                    next = true;
-                                }
-                            }
-
-                            return new BonusAction {
-                                isAffected = improvementCount > 0,
-                                score = 0,
-                            };
-                        }
+                        type = BonusType.Charged,
+                        stringArg = letter.ToString(),
                     };
                 }
             }
@@ -690,9 +237,658 @@ public class Bonus : MonoBehaviour, System.ICloneable
         return bonusGetter();
     }
 
+    public BonusAction OnScore(string word)
+    {
+        if (info.type == BonusType.TwoLetters)
+        {
+            if (word.Contains(info.stringArg))
+            {
+                GameManager.i.ImproveLetter(info.stringArg[0]);
+                GameManager.i.ImproveLetter(info.stringArg[1]);
+
+                return new BonusAction {
+                    isAffected = true,
+                    score = 0,
+                };
+            }
+            else
+            {
+                return new BonusAction {
+                    isAffected = false,
+                    score = 0,
+                };
+            }
+        }
+        else if (info.type == BonusType.Charged)
+        {
+            int improvementCount = 0;
+            bool next = false;
+            Letter baseLetter = GameManager.i.GetLetterFromChar(info.stringArg[0]);
+
+            foreach (char c in word) {
+                Letter l = GameManager.i.GetLetterFromChar(c);
+
+                if (next) {
+                    l.effect = Letter.Effect.Electric;
+                    improvementCount++;
+                    next = false;
+                }
+
+                if (l == baseLetter) {
+                    next = true;
+                }
+            }
+
+            return new BonusAction {
+                isAffected = improvementCount > 0,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.RelativeNumbers)
+        {
+            int improvementCount = 0;
+
+            foreach (char c in word) {
+                Letter l = GameManager.i.GetLetterFromChar(c);
+
+                if (l.Level <= 0) {
+                    improvementCount++;
+                    l.Level++;
+                }
+            }
+
+            return new BonusAction {
+                isAffected = improvementCount > 0,
+                score = improvementCount * 25,
+            };
+        }
+        else if (info.type == BonusType.Concentrate)
+        {
+            char highest = '\0';
+            int highestLevel = -9999999;
+            char lowest = '\0';
+            int lowestLevel = 99999999;
+
+            foreach (char c in word) {
+                Letter l = GameManager.i.GetLetterFromChar(c);
+
+                if (l.Level > highestLevel) {
+                    highestLevel = l.Level;
+                    highest = c;
+                }
+
+                if (l.Level < lowestLevel) {
+                    lowestLevel = l.Level;
+                    lowest = c;
+                }
+            }
+
+            GameManager.i.ImproveLetter(highest);
+            GameManager.i.GetLetterFromChar(lowest).Level -= 1;
+
+            return new BonusAction {
+                isAffected = true,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.Forbidden)
+        {
+            bool found = false;
+            foreach (char c in word) {
+                found |= c == info.stringArg[0];
+            }
+
+            GameManager.i.ImproveLetter(info.stringArg[0]);
+            GameManager.i.ImproveLetter(info.stringArg[0]);
+
+            return new BonusAction {
+                isAffected = true,
+                score = found ? -500 : 00,
+            };
+        }
+        else if (info.type == BonusType.Everywhere)
+        {
+            bool improved = false;
+            
+            foreach (char c in word) {
+                if (GameManager.i.AreCharsEqual(c, info.stringArg[0])) {
+                    improved = true;
+                    GameManager.i.ImproveLetter(c);
+                }
+            }
+
+            return new BonusAction {
+                isAffected = true,
+                score = improved ? 0 : -500,
+            };
+        }
+        else if (info.type == BonusType.OOO)
+        {
+            bool improved = false;
+            bool lastWasO = false;
+            foreach (char c in word) {
+                if (lastWasO) {
+                    improved = true;                                    
+                    GameManager.i.ImproveLetter(c);
+                }
+
+                lastWasO = GameManager.i.AreCharsEqual(c, 'O');
+            }
+
+            return new BonusAction {
+                isAffected = improved,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.Palindrome)
+        {
+            if (GameManager.i.AreCharsEqual(word[0], word[word.Length - 1]))
+            {
+                GameManager.i.ImproveLetter(word[0]);
+
+                return new BonusAction {
+                    isAffected = true,
+                    score = 15,
+                };
+            }
+            else
+            {
+                return new BonusAction {
+                    isAffected = false,
+                    score = 0,
+                };
+            }
+        }
+        else if (info.type == BonusType.Equalizer)
+        {
+            int least = 100000000;
+            int leastId = 0;
+            for (int i = 0; i < word.Length; i++)
+            {
+                Letter letter = GameManager.i.GetLetterFromChar(word[i]);
+                if (letter.Level < least)
+                {
+                    least = letter.Level;
+                    leastId = i;
+                }
+            }
+
+            GameManager.i.ImproveLetter(word[leastId]);
+
+            return new BonusAction {
+                isAffected = true,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.Emergency)
+        {
+            Letter l = GameManager.i.GetLetterFromChar(info.stringArg[0]);
+
+            foreach (char c in word)
+            {   
+                if (GameManager.i.AreCharsEqual(c, info.stringArg[0]))
+                {
+                    if (l.Level % 2 == 0)
+                    {
+                        GameManager.i.ImproveLetter(info.stringArg[0]);
+                        GameManager.i.ImproveLetter(info.stringArg[0]);
+                        GameManager.i.ImproveLetter(info.stringArg[0]);
+
+                        return new BonusAction {
+                            isAffected = true,
+                            score = 30,
+                        };
+                    }
+                }
+            }
+
+            return new BonusAction {
+                isAffected = false,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.FrequentVowel)
+        {
+            int[] counts = new int[26];
+
+            foreach (char c in word)
+            {
+                counts[c - 'A']++;
+            }
+
+            int best = 0;
+            for (int i = 0; i < 26; i++)
+            {
+                if (Util.IsVowel((char)(i + 'A')) && best < counts[i])
+                {
+                    best = counts[i];
+                }
+            }
+
+            return new BonusAction {
+                isAffected = best > 0,
+                score = 6 * best,
+            };
+        }
+        else if (info.type == BonusType.Triple)
+        {
+            int[] counts = new int[26];
+            bool improved = false;
+
+            foreach (char c in word)
+            {
+                for (int i = 0; i < 26; i++)
+                {
+                    if (GameManager.i.AreCharsEqual((char)(i + 'A'), c)) {
+                        counts[i]++;
+                    }
+                }
+            }
+
+            for (int i = 0; i < 26; i++)
+            {
+                if (counts[i] >= 3)
+                {
+                    improved = true;
+                    GameManager.i.ImproveLetter((char)(i + 'A'));
+                }
+            }
+
+            return new BonusAction {
+                isAffected = improved,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.Length)
+        {
+            if (word.Length == info.intArg)
+            {
+                int score = 0;
+                foreach (char c in word)
+                {
+                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
+                }
+
+                score /= 2;
+
+                return new BonusAction {
+                    isAffected = true,
+                    score = score,
+                };
+            }
+            else
+            {
+                return new BonusAction {
+                    isAffected = false,
+                    score = 0,
+                };
+            }
+        }
+        else if (info.type == BonusType.MoreVowels)
+        {
+            int vowelCount = Util.CountVowels(word);
+            int consonantCount = Util.CountConsonant(word);
+
+            if (vowelCount > consonantCount)
+            {
+                foreach (char c in word) {
+                    GameManager.i.ImproveLetter(c);
+                }
+
+                return new BonusAction {
+                    isAffected = true,
+                    score = 0
+                };
+            }
+            else
+            {
+                return new BonusAction {
+                    isAffected = false,
+                    score = 0,
+                };
+            }
+        }
+        else if (info.type == BonusType.Initial)
+        {
+            if (word.Length > 0) 
+            {
+                GameManager.i.ImproveLetter(word[0]);
+                return new BonusAction {
+                    isAffected = true,
+                    score = 0,
+                };
+            }
+            else
+            {
+                return new BonusAction {
+                    isAffected = false,
+                    score = 0,
+                };
+            }
+        }
+        else if (info.type == BonusType.Double)
+        {
+            bool improved = false;
+
+            char last = '\0';
+            foreach (char c in word)
+            {
+                if (GameManager.i.AreCharsEqual(last, c))
+                {
+                    improved = true;
+                    GameManager.i.ImproveLetter(c);
+                }
+
+                last = c;
+            }    
+        
+            return new BonusAction {
+                isAffected = improved,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.ShortWord)
+        {
+            if (word.Length == 4)
+            {
+                char[] lettersToImprove = new char[4];
+
+                for (int i = 0; i < 4; i++)
+                {
+                    GameManager.i.ImproveLetter(word[i]);
+                }
+
+                return new BonusAction {
+                    isAffected = true,
+                    score = 0,
+                };
+            }
+            else
+            {
+                return new BonusAction {
+                    isAffected = false,
+                    score = 0,
+                };
+            }
+        }
+        else if (info.type == BonusType.RareLetters)
+        {
+            bool improved = false;
+
+            foreach (char c in word)
+            {
+                if (GameManager.i.AreCharsEqual(c, 'Q')
+                    || GameManager.i.AreCharsEqual(c, 'J')
+                    || GameManager.i.AreCharsEqual(c, 'Z')
+                    || GameManager.i.AreCharsEqual(c, 'X'))
+                {
+                    improved = true;
+                    GameManager.i.ImproveLetter(c);
+                    GameManager.i.ImproveLetter(c);
+                }
+            }    
+        
+            return new BonusAction {
+                isAffected = improved,
+                score = improved ? 10 : 0,
+            };
+        }
+        else if (info.type == BonusType.WorstCopy)
+        {
+            int worstLevel = 100000000;
+
+            foreach (char c in word)
+            {
+                Letter l = GameManager.i.GetLetterFromChar(c);
+
+                if (l.Level < worstLevel) worstLevel = l.Level;
+            }
+
+            return new BonusAction {
+                isAffected = true,
+                score = 3 * worstLevel,
+            };
+        }
+        else if (info.type == BonusType.BestCopy)
+        {
+            int bestLevel = 0;
+
+            foreach (char c in word)
+            {
+                Letter l = GameManager.i.GetLetterFromChar(c);
+
+                if (l.Level > bestLevel) bestLevel = l.Level;
+            }
+
+            return new BonusAction {
+                isAffected = true,
+                score = bestLevel,
+            };
+        }
+        else if (info.type == BonusType.Consonants)
+        {
+            int consonantCount = 0;
+            foreach (char c in word)
+            {
+                if (!Util.IsVowel(c)) consonantCount++;
+            }
+
+            int randCons = Random.Range(0, consonantCount);
+            int i = 0;
+            foreach (char c in word)
+            {
+                if (!Util.IsVowel(c)) 
+                {
+                    if (i == randCons) {
+                        GameManager.i.ImproveLetter(c);
+                        return new BonusAction {
+                            isAffected = true,
+                            score = 0,
+                        };
+                    }
+
+                    i++;
+                }                            
+            }
+
+            return new BonusAction {
+                isAffected = false,
+                score = 0,
+            };
+        }
+        else
+        {
+            throw new System.Exception("Missing branch!");
+        }
+    }
+
+    public string GetName()
+    {
+        if (info.type == BonusType.TwoLetters)
+        {
+            return info.stringArg;
+        }
+        else if (info.type == BonusType.Charged)
+        {
+            return $"Charged {info.stringArg}";
+        }
+        else if (info.type == BonusType.RelativeNumbers)
+        {
+            return "Relative numbers";
+        }
+        else if (info.type == BonusType.Concentrate)
+        {
+            return "Concentrate";
+        }
+        else if (info.type == BonusType.Forbidden)
+        {
+            return $"Forbidden {info.stringArg}";
+        }
+        else if (info.type == BonusType.Everywhere)
+        {
+            return $"{info.stringArg} everywhere";
+        }
+        else if (info.type == BonusType.OOO)
+        {
+            return "oOo";
+        }
+        else if (info.type == BonusType.Palindrome)
+        {
+            return "Palindrome";
+        }
+        else if (info.type == BonusType.Equalizer)
+        {
+            return "Equalizer";
+        }
+        else if (info.type == BonusType.Emergency)
+        {
+            return $"Emergency {info.stringArg}";
+        }
+        else if (info.type == BonusType.FrequentVowel)
+        {
+            return "Frequent vowel";
+        }
+        else if (info.type == BonusType.Triple)
+        {
+            return "Triple";
+        }
+        else if (info.type == BonusType.Length)
+        {
+            return $"{info.intArg} letters";
+        }
+        else if (info.type == BonusType.MoreVowels)
+        {
+            return "More vowels";
+        }
+        else if (info.type == BonusType.Initial)
+        {
+            return "The initial";
+        }
+        else if (info.type == BonusType.Double)
+        {
+            return "Double";
+        }
+        else if (info.type == BonusType.ShortWord)
+        {
+            return "Sort word";
+        }
+        else if (info.type == BonusType.RareLetters)
+        {
+            return "Rare letters";
+        }
+        else if (info.type == BonusType.WorstCopy)
+        {
+            return "Worst copy";
+        }
+        else if (info.type == BonusType.BestCopy)
+        {
+            return "Best copy";
+        }
+        else if (info.type == BonusType.Consonants)
+        {
+            return "Consonants";
+        }
+        else
+        {
+            throw new System.Exception("Missing branch!");
+        }
+    }
+
+    public string GetDescription()
+    {
+        if (info.type == BonusType.TwoLetters)
+        {
+            return $"If the word contains {Util.DecorateArgument(info.stringArg)}, improves these letters by one level.";
+        }
+        else if (info.type == BonusType.Charged)
+        {
+            return $"Gives the Electric effect to letters located after every {Util.DecorateArgument(info.stringArg)}. The next time they are played, Electric letters will loose their effect and give 10 additional points.";
+        }
+        else if (info.type == BonusType.RelativeNumbers)
+        {
+            return "Improves letters which level is strictly less than 1. Gives 25 points per letter improved.";
+        }
+        else if (info.type == BonusType.Concentrate)
+        {
+            return "Lower the level of the least improved letter in the word, and improves the level of the most improved letter in word. (Will improve the leftmost letter if many)";
+        }
+        else if (info.type == BonusType.Forbidden)
+        {
+            return $"Improves {Util.DecorateArgument(info.stringArg)} by two levels. If the word contain this letter, -500 points.";
+        }
+        else if (info.type == BonusType.Everywhere)
+        {
+            return $"Improves every {Util.DecorateArgument(info.stringArg)} in the word. If the word doesn't contain any, -500 points.";
+        }
+        else if (info.type == BonusType.OOO)
+        {
+            return $"Improves the letters located directly after an {Util.DecorateArgument("O")}";
+        }
+        else if (info.type == BonusType.Palindrome)
+        {
+            return "If the first letter and the last letter of the word are identical, improves this letter and gives 15 points.";
+        }
+        else if (info.type == BonusType.Equalizer)
+        {
+            return "Improves the least improved letter in the word (will improve the leftmost if multiple letters).";
+        }
+        else if (info.type == BonusType.Emergency)
+        {
+            return $"If the word contains {Util.DecorateArgument(info.stringArg)} and the level of the letter is even, improves its level by 3 and gives 30 points.";
+        }
+        else if (info.type == BonusType.FrequentVowel)
+        {
+            return $"Looks for the vowel that appeared the most in the word, then adds 6 points per time it appeared.";
+        }
+        else if (info.type == BonusType.Triple)
+        {
+            return $"If the word contains three identical letters, improve the level of the letter.";
+        }
+        else if (info.type == BonusType.Length)
+        {
+            return $"If the word is exactly {info.intArg} letters long, gives half the points of the word (not counting other bonuses).";
+        }
+        else if (info.type == BonusType.MoreVowels)
+        {
+            return "If the word has strictly more vowels than consonants, improves every letter of the word";
+        }
+        else if (info.type == BonusType.Initial)
+        {
+            return "Improves the first letter of the word";
+        }
+        else if (info.type == BonusType.Double)
+        {
+            return "If the word contains two identical adjacent letters, improve the level of the letter.";
+        }
+        else if (info.type == BonusType.ShortWord)
+        {
+            return "If the word is 4 letters long, improves the 4 letters.";
+        }
+        else if (info.type == BonusType.RareLetters)
+        {
+            return $"Improves twice the level of every {Util.DecorateArgument('Q')}, {Util.DecorateArgument('J')}, {Util.DecorateArgument('X')} and {Util.DecorateArgument('Z')} in the word, and give 10 points if one is present";
+        }
+        else if (info.type == BonusType.WorstCopy)
+        {
+            return "Looks for the least improved letter in the word, then adds 3 times its level to the score";
+        }
+        else if (info.type == BonusType.BestCopy)
+        {
+            return "Looks for the most improved letter in the word, then adds its level to the score";
+        }
+        else if (info.type == BonusType.Consonants)
+        {
+            return $"Improves a random consonant in the word.";
+        }
+        else 
+        {
+            throw new System.Exception("Missing branch!");
+        }
+    }
+
     public void OnClick()
     {
-        BonusPopup.i.ShowPopup(info.name, info.description, popupAction, popupActionText);
+        BonusPopup.i.ShowPopup(GetName(), GetDescription(), popupAction, popupActionText);
     }
 
     public BonusAction ScoreWithInterface(string word, bool withInterface)
@@ -706,7 +902,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else
         {
-            res = info.onScore(word.ToUpper());
+            res = OnScore(word.ToUpper());
         }
 
         isOscillating = res.isAffected && withInterface;
@@ -744,12 +940,37 @@ public class Bonus : MonoBehaviour, System.ICloneable
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public class BonusInfo
+public struct BonusInfo
 {
-    public string name;
-    public string description;
-    public System.Func<string, BonusAction> onScore; // TODO: make sure it's upper
+    public BonusType type;
+    public string stringArg;
+    public int intArg;
 }
+
+public enum BonusType {
+    TwoLetters,
+    Consonants,
+    BestCopy,
+    WorstCopy,
+    RareLetters,
+    ShortWord,
+    Double,
+    Initial,
+    MoreVowels,
+    Length,
+    Triple,
+    FrequentVowel,
+    Emergency,
+    Equalizer,
+    Palindrome,
+    OOO,
+    Everywhere,
+    Forbidden,
+    Concentrate,
+    RelativeNumbers,
+    Charged,
+}
+
 
 [StructLayout(LayoutKind.Sequential)]
 public struct BonusAction

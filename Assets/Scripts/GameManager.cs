@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using UnityEditor.Animations;
 using System.Runtime.InteropServices;
+using System.Linq.Expressions;
 
 public class GameManager : MonoBehaviour
 {   
+    public const int MAX_BONUS = 4;
+
     public static GameManager i;
 
     [System.NonSerialized]
@@ -14,7 +16,6 @@ public class GameManager : MonoBehaviour
     public int minWordLength = 3;
     public int maxWordLength = 12;
     public int wordsPerLevel = 3;
-    public int maxBonus = 4;
     public int blessingPointsLimit = 6;
     public string rareLetters = "JQXZ";
     
@@ -36,6 +37,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public List<Bonus> bonuses;
 
+    public Letter[] letters;
 
     public TextMeshProUGUI errorText;
     public TextMeshProUGUI currentScoreText;
@@ -67,17 +69,20 @@ public class GameManager : MonoBehaviour
     private void Start() 
     {
         Word.Init();
-        StartGame();
+        HideError(true);
+        Keyboard.i.Init();
+        letters = new Letter[26]; // Create a trash array so the keyboard doesn't throw errors 
     }
 
-    public void StartGame()
+    public void StartNewRun()
     {
         PanelsManager.i.SelectPanel("Main", false);
+        PanelsManager.i.ToggleGameUI(true);
 
         gi = new GameInfo {
-            letters = new Letter[26],
+            lettersCopy = new Letter.LetterStruct[26],
             gameStats = new Stats(),
-            bonuses = new BonusInfo[maxBonus],
+            bonuses = new BonusInfo[MAX_BONUS],
         };
 
         bonusFullPanel.SetActive(false);
@@ -86,15 +91,15 @@ public class GameManager : MonoBehaviour
 
         // Reset letters
         for (int i = 0; i < 26; i++) {
-            gi.letters[i] = new Letter {
+            letters[i] = new Letter {
                 letter = (char)((int)'A' + i),
                 Level = rareLetters.Contains((char)((int)'A' + i)) ? 2 : 1,
             };
         }
 
-        Keyboard.i.Init();
-
         HideError(true);
+
+        Keyboard.i.UpdateAllKeys(false);
 
         foreach (Transform t in bonusParent) 
         {
@@ -107,24 +112,31 @@ public class GameManager : MonoBehaviour
         StartNewLevel();
     }
 
+    public void LoadRun()
+    {
+        HideError(true);
+        UpdateCurrentScoreText(0);
+        bonusFullPanel.SetActive(false);
+        SaveManager.LoadRun();
+        Keyboard.i.UpdateAllKeys(false);
+        PanelsManager.i.ToggleGameUI(true);
+    }
+
     public void LevelCompleted()
     {
         if (gi.blessingPoints >= blessingPointsLimit) {
-            ColorManager.i.SetTheme("blessing", false);
             SetBlessingPoints(0);
             EventManager.i.Do(false, LevelCompleted);
+            return;
         }
 
         if (gi.currentLevel % 2 == 0) {
-            ColorManager.i.SetTheme("bonus", false);
             BonusManager.i.Do();
         }
         else if (gi.currentLevel % 4 == 3) {
-            ColorManager.i.SetTheme("curse", false);
             EventManager.i.Do(true, StartNewLevel);
         }
         else {
-            ColorManager.i.SetTheme("improvement", false);
             ImprovementManager.i.Do();
         }
     }
@@ -133,25 +145,26 @@ public class GameManager : MonoBehaviour
     {
         gi.currentLevel++;
         gi.levelWords = 0;
-        SaveManager.SaveRun(GameInfo.State.Ingame);
         UpdateTotalScore(0, true);
         InitLevel();
+        SaveManager.SaveRun(GameInfo.State.Ingame);
     } 
 
     public void InitLevel()
     {
-        wordsCounter.SetValue(gi.levelWords + 1);
-        ChangeConstraint();
-        UpdateCurrentScoreText(0);
-        UpdateTargetScoreText(false);
         PanelsManager.i.SelectPanel("Main", false);
         ColorManager.i.SetTheme("default", false);
+        wordsCounter.SetValue(gi.levelWords + 1);
+        ChangeConstraint();
+        UpdateTotalScore(gi.totalScore, true);
+        UpdateCurrentScoreText(0);
+        UpdateTargetScoreText(false);
     } 
 
     public Letter GetLetterFromChar(char c)
     {
         char lower = char.ToLower(c);
-        return gi.letters[(int)lower - (int)'a'];
+        return letters[(int)lower - (int)'a'];
     }
 
     public void Update() 
@@ -177,7 +190,7 @@ public class GameManager : MonoBehaviour
         }
 
         // TEST
-        if (Input.GetKey(KeyCode.LeftShift) & Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.O)) 
+        if (Input.GetKey(KeyCode.LeftShift) && Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.O)) 
         {
             SaveManager.LoadRun();
         }
@@ -341,11 +354,9 @@ public class GameManager : MonoBehaviour
 
     private void UpdateTotalScore(int newValue, bool immediate) 
     {
-        if (gi.totalScore == newValue) return;
-
         gi.totalScore = newValue;
 
-        if (!immediate)
+        if (!immediate && gi.totalScore != newValue)
         {
             Util.LeanTweenShake(totalScoreText.gameObject, 25, 0.4f);
         }
@@ -439,7 +450,7 @@ public class GameManager : MonoBehaviour
         // Create a copy of the letters, so that the modifications can be reverted
         Letter[] lettersCopy = new Letter[26];
         for (int i = 0; i < 26; i++) {
-            lettersCopy[i] = GameManager.i.gi.letters[i].Clone() as Letter;
+            lettersCopy[i] = letters[i].Clone() as Letter;
         }
 
         foreach (Bonus bonus in bonuses)
@@ -453,7 +464,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Put the old letters back!
-        gi.letters = lettersCopy;
+        letters = lettersCopy;
 
         return total;
     }
@@ -524,7 +535,7 @@ public class GameManager : MonoBehaviour
         BonusPopup.i.HidePopup();
         ShowBonusPopup(false);
 
-        if (bonuses.Count >= maxBonus) 
+        if (bonuses.Count >= MAX_BONUS) 
         {
             ShowBonusPopup(true);
             return false;
@@ -544,6 +555,12 @@ public class GameManager : MonoBehaviour
             return true;
         }
     }
+
+    public bool CloneBonus(Bonus b)
+    {
+        Bonus clone = Instantiate(b.gameObject).GetComponent<Bonus>();
+        return AddBonus(clone);
+    }
     
     public void CreateBonusUIFromGameInfo()
     {
@@ -554,9 +571,10 @@ public class GameManager : MonoBehaviour
 
         bonuses.Clear();
 
-        foreach (BonusInfo info in gi.bonuses) 
+        for (int i = 0; i < GameManager.i.gi.bonusCount; i++)
         {
             Bonus b = Instantiate(bonusPrefab, bonusParent).GetComponent<Bonus>();
+            b.Init(gi.bonuses[i]);
             AddBonus(b);
         }
     }
@@ -603,7 +621,7 @@ public class GameManager : MonoBehaviour
     public Letter GetNthMostImprovedLetter(int n) 
     {
         Letter[] copy = new Letter[26]; 
-        System.Array.Copy(gi.letters, 0, copy, 0, 26);
+        System.Array.Copy(letters, 0, copy, 0, 26);
         System.Array.Sort(copy);
 
         return copy[26 - n];
@@ -625,11 +643,13 @@ public struct GameInfo {
     public State state;
     public int currentLevel;
 
-    [MarshalAs(UnmanagedType.ByValArray)]
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = GameManager.MAX_BONUS)]
     public BonusInfo[] bonuses;
+    public int bonusCount; // Info for reading the file, don't use it
     
-    [MarshalAs(UnmanagedType.ByValArray)]
-    public Letter[] letters;
+    // Not the actual letters! Just a copy for the save! See GameManager.letters
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 26)]
+    public Letter.LetterStruct[] lettersCopy;
 
     public Random.State randomState;
     public Stats gameStats;

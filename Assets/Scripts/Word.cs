@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Unity.VisualScripting.Dependencies.Sqlite;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public static class Word 
@@ -75,7 +75,7 @@ public class Letter : System.ICloneable, System.IComparable
         }
         else if (effect == Effect.Poisonous) {
             if (played) {
-                Util.GetRandomElement(GameManager.i.gi.letters).Level--;
+                Util.GetRandomElement(GameManager.i.letters).Level--;
             }
         }
         else if (effect == Effect.Doomed) {
@@ -125,6 +125,32 @@ public class Letter : System.ICloneable, System.IComparable
             return Level.CompareTo((obj as Letter).Level); 
         }
         else return 0;
+    }
+
+    public LetterStruct GetStruct()
+    {
+        return new LetterStruct {
+            effect = this.effect,
+            timesUsed = this.timesUsed,
+            level = this.Level,
+        };
+    }
+
+    // A struct version for the saves
+    public struct LetterStruct
+    {
+        public Effect effect;
+        public int timesUsed;
+        public int level;
+
+        public Letter ToRealLetter(char c) {
+            return new Letter {
+                letter = c,
+                _level = this.level,
+                timesUsed = this.timesUsed,
+                effect = this.effect,
+            };
+        }
     }
 }
 

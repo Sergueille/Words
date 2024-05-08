@@ -6,11 +6,20 @@ public class PanelsManager : MonoBehaviour
     public static PanelsManager i;
 
     public GameObject[] panels;
-    
+
+    public CanvasGroup topUI;
+    public CanvasGroup bottomUI;
+
     private void Awake()
     {
         i = this;
         SelectPanel(panels[0].name, true);
+        ToggleGameUI(false);
+    }
+
+    public void SelectPanel(GameObject panel)
+    {
+        SelectPanel(panel.name, false);
     }
 
     public void SelectPanel(string name, bool immediate)
@@ -43,5 +52,14 @@ public class PanelsManager : MonoBehaviour
     public string GetCurrentPanelName()
     {
         return GameManager.i.gi.currentPanelName;
+    }
+
+    public void ToggleGameUI(bool enabled)
+    {
+        topUI.alpha = enabled ? 1 : 0;
+        bottomUI.alpha = enabled ? 1 : 0;
+
+        topUI.interactable = enabled;
+        bottomUI.interactable = enabled;
     }
 }

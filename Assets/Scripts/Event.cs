@@ -244,7 +244,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Burn",
-                    description = "Give the Burning effect to the fourth most improved letter. The letter will gain a level when used, but will loose 2 if not used in a word.",
+                    description = "Gives the Burning effect to the fourth most improved letter. The letter will gain a level when used, but will loose 2 if not used in a word.",
                     onCall = () => {
                         GameManager.i.GetNthMostImprovedLetter(4).effect = Letter.Effect.Burning; 
                     }
@@ -254,11 +254,10 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Left copy",
-                    description = "Give two copies of the leftmost bonus, if enough place.",
+                    description = "Gives a copy of the leftmost bonus, if enough place.",
                     onCall = () => {
                         if (GameManager.i.bonuses.Count > 0) {
-                            GameManager.i.AddBonus(GameManager.i.bonuses[0].Clone() as Bonus);
-                            GameManager.i.AddBonus(GameManager.i.bonuses[0].Clone() as Bonus);
+                            GameManager.i.CloneBonus(GameManager.i.bonuses[0]);
                         }
                     }
                 }
@@ -267,11 +266,10 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Right copy",
-                    description = "Give two copies of the rightmost bonus, if enough place.",
+                    description = "Gives a copy of the rightmost bonus, if enough place.",
                     onCall = () => {
                         if (GameManager.i.bonuses.Count > 0) {
-                            GameManager.i.AddBonus(GameManager.i.bonuses[^1].Clone() as Bonus);
-                            GameManager.i.AddBonus(GameManager.i.bonuses[^1].Clone() as Bonus);
+                            GameManager.i.CloneBonus(GameManager.i.bonuses[^1]);
                         }
                     }
                 }
@@ -279,13 +277,11 @@ public class Event : MonoBehaviour
             new EventSpawner {
                 weight = 1.0f,
                 data = () => new EventInfo {
-                    name = "",
-                    description = "Give two copies of the rightmost bonus, if enough place.",
+                    name = "Luck",
+                    description = "Take two random benedictions (including this benediction).",
                     onCall = () => {
-                        if (GameManager.i.bonuses.Count > 0) {
-                            GameManager.i.AddBonus(GameManager.i.bonuses[^1].Clone() as Bonus);
-                            GameManager.i.AddBonus(GameManager.i.bonuses[^1].Clone() as Bonus);
-                        }
+                        GetRandomBlessing().onCall();
+                        GetRandomBlessing().onCall();
                     }
                 }
             },

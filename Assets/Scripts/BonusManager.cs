@@ -24,6 +24,7 @@ public class BonusManager : MonoBehaviour
         IEnumerator<WaitUntil> Coroutine() 
         {
             PanelsManager.i.SelectPanel("Bonus", false);
+            ColorManager.i.SetTheme("bonus", false);
             SaveManager.SaveRun(GameInfo.State.Bonus);
 
             finished = false;
@@ -38,7 +39,7 @@ public class BonusManager : MonoBehaviour
                 };
                 bonus.popupActionText = "Select";
 
-                bonus.Init();
+                bonus.Init(Bonus.GetRandomBonus());
             }
 
             yield return new WaitUntil(() => finished);

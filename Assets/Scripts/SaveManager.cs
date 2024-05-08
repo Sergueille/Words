@@ -12,11 +12,18 @@ public static class SaveManager
         GameManager.i.gi.randomState = Random.state;
         GameManager.i.gi.state = state;
 
-        GameManager.i.gi.bonuses = new BonusInfo[GameManager.i.maxBonus];
+        GameManager.i.gi.bonuses = new BonusInfo[GameManager.MAX_BONUS];
         int i = 0;
         foreach (Bonus b in GameManager.i.bonuses) {
             GameManager.i.gi.bonuses[i] = b.info;
             i++;
+        }
+        GameManager.i.gi.bonusCount = i;
+
+        // Copy letters to struct
+        for (int j = 0; j < 26; j++)
+        {
+            GameManager.i.gi.lettersCopy[j] = GameManager.i.letters[j].GetStruct();
         }
 
         byte[] bytes = GetBytes(GameManager.i.gi);
@@ -29,10 +36,16 @@ public static class SaveManager
         byte[] bytes = System.IO.File.ReadAllBytes(GetPath(RUN_SAVE_NAME));
         GameManager.i.gi = FromBytes<GameInfo>(bytes);
 
+        // Copy letter data
+        GameManager.i.letters = new Letter[26];
+        for (int i = 0; i < 26; i++)
+        {
+            GameManager.i.letters[i] = GameManager.i.gi.lettersCopy[i].ToRealLetter((char)('A' + i));
+        }
+
         Random.state = GameManager.i.gi.randomState;
         PanelsManager.i.SelectPanel(GameManager.i.gi.currentPanelName, false);
         GameManager.i.CreateBonusUIFromGameInfo();
-        GameManager.i.InitLevel();
         GameManager.i.SetBlessingPoints(GameManager.i.gi.blessingPoints);
 
         switch (GameManager.i.gi.state) {

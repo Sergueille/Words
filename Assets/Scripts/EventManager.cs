@@ -27,10 +27,12 @@ public class EventManager : MonoBehaviour
 
             if (curse) {
                 titleText.text = "Pick a curse:";
+                ColorManager.i.SetTheme("curse", false);
                 SaveManager.SaveRun(GameInfo.State.Curse);
             }
             else {
                 titleText.text = "Pick a blessing:";
+                ColorManager.i.SetTheme("blessing", false);
                 SaveManager.SaveRun(GameInfo.State.Blessing);
             }
 
