@@ -32,17 +32,13 @@ public static class Word
     {
         return words[word];
     }
-
-    public static int GetLetterScore(Letter l) 
-    {
-        return l.Level;
-    }
 }
 
 
-[StructLayout(LayoutKind.Sequential)]
+[System.Serializable]
 public class Letter : System.ICloneable, System.IComparable
 {
+    [System.Serializable]
     public enum Effect {
         None, 
         Poisonous, Doomed, Locked,
@@ -52,6 +48,7 @@ public class Letter : System.ICloneable, System.IComparable
 
     public char letter;
 
+    [SerializeField]
     private int _level;
     public int Level {
         get => _level;
@@ -75,7 +72,7 @@ public class Letter : System.ICloneable, System.IComparable
         }
         else if (effect == Effect.Poisonous) {
             if (played) {
-                Util.GetRandomElement(GameManager.i.letters).Level--;
+                Util.GetRandomElement(GameManager.i.gi.letters).Level--;
             }
         }
         else if (effect == Effect.Doomed) {
@@ -104,7 +101,7 @@ public class Letter : System.ICloneable, System.IComparable
 
     public void OnNotPlayed() {
         if (effect == Effect.Burning) {
-            Level -= 2;
+            Level--;
         }
     }
 
@@ -125,32 +122,6 @@ public class Letter : System.ICloneable, System.IComparable
             return Level.CompareTo((obj as Letter).Level); 
         }
         else return 0;
-    }
-
-    public LetterStruct GetStruct()
-    {
-        return new LetterStruct {
-            effect = this.effect,
-            timesUsed = this.timesUsed,
-            level = this.Level,
-        };
-    }
-
-    // A struct version for the saves
-    public struct LetterStruct
-    {
-        public Effect effect;
-        public int timesUsed;
-        public int level;
-
-        public Letter ToRealLetter(char c) {
-            return new Letter {
-                letter = c,
-                _level = this.level,
-                timesUsed = this.timesUsed,
-                effect = this.effect,
-            };
-        }
     }
 }
 

@@ -191,16 +191,6 @@ public class Event : MonoBehaviour
             new EventSpawner {
                 weight = 1.0f,
                 data = () => new EventInfo {
-                    name = "Polymorphic letter",
-                    description = "Gives the Polymorphic effect to the least improved letter. The letter will not score any point, but will be considered equal to the previous and next letter in the alphabet.",
-                    onCall = () => {
-                        GameManager.i.GetNthMostImprovedLetter(26).effect = Letter.Effect.Polymorphic; 
-                    }
-                }
-            },
-            new EventSpawner {
-                weight = 1.0f,
-                data = () => new EventInfo {
                     name = "Doubled letter",
                     description = "Gives the Doubled effect on the third most improved letter. The letter will score twice as many points.",
                     onCall = () => {
@@ -223,8 +213,34 @@ public class Event : MonoBehaviour
             new EventSpawner {
                 weight = 1.0f,
                 data = () => new EventInfo {
+                    name = "Vowel incrementation",
+                    description = "Improves every vowel by 5 levels.",
+                    onCall = () => {
+                        for (char a = 'a'; a <= 'z'; a++) {
+                            if (Util.IsVowel(a))
+                            {
+                                GameManager.i.GetLetterFromChar(a).Level += 5;
+                            }
+                        }
+                    }
+                }
+            },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
+                    name = "",
+                    description = "Multiplies the level of the most improved letter by 1.4 (rounded up)",
+                    onCall = () => {
+                        Letter l = GameManager.i.GetNthMostImprovedLetter(1);
+                        l.Level = Mathf.CeilToInt(1.4f * l.Level);
+                    }
+                }
+            },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
                     name = "Cleaning",
-                    description = "Removes every negative effect, and letters with level that is less than 1 will have level 3.",
+                    description = "Removes every negative effect, and letters with level that is less than 3 will have level 3.",
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
                             Letter l = GameManager.i.GetLetterFromChar(a);
@@ -233,7 +249,7 @@ public class Event : MonoBehaviour
                                 l.effect = Letter.Effect.None;
                             }
 
-                            if (l.Level < 1) {
+                            if (l.Level < 3) {
                                 l.Level = 3;
                             }
                         }
@@ -244,7 +260,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Burn",
-                    description = "Gives the Burning effect to the fourth most improved letter. The letter will gain a level when used, but will loose 2 if not used in a word.",
+                    description = "Gives the Burning effect to the fourth most improved letter. The letter will gain a level when used, but will loose 1 if not used in a word.",
                     onCall = () => {
                         GameManager.i.GetNthMostImprovedLetter(4).effect = Letter.Effect.Burning; 
                     }

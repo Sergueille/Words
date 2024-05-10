@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using System.Text;
+using Unity.VisualScripting.Antlr3.Runtime;
 
 public class Background : MonoBehaviour
 {
@@ -18,16 +19,6 @@ public class Background : MonoBehaviour
 
     private void Start()
     {
-        StringBuilder randomStrBuilder = new StringBuilder(charCount);
-
-        for (int i = 0; i < charCount; i++)
-        {
-            char c = (char)('A' + Random.Range(0, 26));
-            randomStrBuilder.Append(c);
-        }
-
-        string randomStr = randomStrBuilder.ToString();
-
         texts = new TextMeshPro[lineCount];
 
         for (int i = 0; i < lineCount; i++)
@@ -35,7 +26,10 @@ public class Background : MonoBehaviour
             float yPos = GetBaseYPosOfText(i);
 
             TextMeshPro text = Instantiate(linePrefab, lineParent).GetComponent<TextMeshPro>();
+            
+            string randomStr = GetRandomString(charCount);
             text.text = randomStr + randomStr;
+            
             text.transform.position = new Vector3(0, yPos, 0);
             text.transform.eulerAngles = new Vector3(0, 0, angle);
             texts[i] = text;
@@ -66,5 +60,18 @@ public class Background : MonoBehaviour
     private float GetBaseYPosOfText(int textId)
     {
         return ((float)textId / (float)(lineCount - 1) - 0.5f) * lineHeight * lineCount;
+    }
+
+    private string GetRandomString(int len)
+    {
+        StringBuilder randomStrBuilder = new StringBuilder(charCount);
+
+        for (int i = 0; i < len; i++)
+        {
+            char c = (char)('A' + Random.Range(0, 26));
+            randomStrBuilder.Append(c);
+        }
+
+        return randomStrBuilder.ToString();
     }
 }

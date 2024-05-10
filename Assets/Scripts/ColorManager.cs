@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class ColorManager : MonoBehaviour
 {
@@ -11,6 +12,8 @@ public class ColorManager : MonoBehaviour
     public Theme[] themes;
     public string startTheme;
     public float transitionDuration;
+
+    public Material[] colorMaterials;
 
     private Theme currentTheme;
     
@@ -25,12 +28,24 @@ public class ColorManager : MonoBehaviour
         SetTheme(startTheme, true);
     }
 
+    private void Update()
+    {
+        for (int i = 0; i < (int)ThemeColor.LastValue; i++)
+        {
+            if (colorMaterials[i] != null)
+            {
+                colorMaterials[i].SetColor("_FaceColor", GetColor((ThemeColor)i));
+            }
+        }
+    }
+
     [System.Serializable]
     public enum ThemeColor {
         Primary, PrimaryDarker, PrimaryLighter,
         Secondary, SecondaryDarker,
-        Background, BackgroundDarker, BackgoundLighter, BackgoundLighterLighter,
-        Foreground, ForegroundDarker
+        Background, BackgroundDarker, [FormerlySerializedAs("BackgoundLighter")] BackgroundLighter, [FormerlySerializedAs("BackgoundLighterLighter")] BackgroundLighterLighter,
+        Foreground, ForegroundDarker,
+        LastValue
     }    
 
     public Color GetColor(ThemeColor color) {
@@ -63,6 +78,11 @@ public class ColorManager : MonoBehaviour
         if (!immediate) {
             transitionStartTime = Time.time;
         }
+    }
+
+    public bool ColorChangedThisFrame()
+    {
+        return Time.time <= transitionStartTime + transitionDuration + 0.1f;
     }
 
     [System.Serializable]

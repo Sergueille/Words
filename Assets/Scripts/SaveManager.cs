@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -12,36 +11,21 @@ public static class SaveManager
         GameManager.i.gi.randomState = Random.state;
         GameManager.i.gi.state = state;
 
-        GameManager.i.gi.bonuses = new BonusInfo[GameManager.MAX_BONUS];
-        int i = 0;
-        foreach (Bonus b in GameManager.i.bonuses) {
-            GameManager.i.gi.bonuses[i] = b.info;
-            i++;
-        }
-        GameManager.i.gi.bonusCount = i;
-
-        // Copy letters to struct
-        for (int j = 0; j < 26; j++)
+        GameManager.i.gi.bonuses = new BonusInfo[GameManager.i.bonuses.Count];
+        for (int i = 0; i < GameManager.i.bonuses.Count; i++)
         {
-            GameManager.i.gi.lettersCopy[j] = GameManager.i.letters[j].GetStruct();
+            GameManager.i.gi.bonuses[i] = GameManager.i.bonuses[i].info;
         }
 
-        byte[] bytes = GetBytes(GameManager.i.gi);
-        System.IO.File.WriteAllBytes(GetPath(RUN_SAVE_NAME), bytes);
+        string txt = JsonUtility.ToJson(GameManager.i.gi, true);
+        System.IO.File.WriteAllText(GetPath(RUN_SAVE_NAME), txt);
         Debug.Log($"Saved at {Application.persistentDataPath}");
     }
 
     public static void LoadRun()
     {
-        byte[] bytes = System.IO.File.ReadAllBytes(GetPath(RUN_SAVE_NAME));
-        GameManager.i.gi = FromBytes<GameInfo>(bytes);
-
-        // Copy letter data
-        GameManager.i.letters = new Letter[26];
-        for (int i = 0; i < 26; i++)
-        {
-            GameManager.i.letters[i] = GameManager.i.gi.lettersCopy[i].ToRealLetter((char)('A' + i));
-        }
+        string txt = System.IO.File.ReadAllText(GetPath(RUN_SAVE_NAME));
+        GameManager.i.gi = JsonUtility.FromJson<GameInfo>(txt);
 
         Random.state = GameManager.i.gi.randomState;
         PanelsManager.i.SelectPanel(GameManager.i.gi.currentPanelName, false);
@@ -95,6 +79,6 @@ public static class SaveManager
 
     private static string GetPath(string filename)
     {
-        return $"{Application.persistentDataPath}/{filename}.save";
+        return $"{Application.persistentDataPath}/{filename}.json";
     }
 }

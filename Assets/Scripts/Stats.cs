@@ -1,7 +1,7 @@
 
 using System.Runtime.InteropServices;
 
-[StructLayout(LayoutKind.Sequential)]
+[System.Serializable]
 public class Stats {
     public int bestScore = 0;
     public string bestScoreWord = "";

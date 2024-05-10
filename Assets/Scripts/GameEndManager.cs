@@ -35,8 +35,8 @@ public class GameEndManager : MonoBehaviour
 
         char mostUsedLetter = '\0';
         int mostUsedLetterUses = 0;
-        for (int i = 0; i < GameManager.i.letters.Length; i++) {
-            Letter l = GameManager.i.letters[i];
+        for (int i = 0; i < GameManager.i.gi.letters.Length; i++) {
+            Letter l = GameManager.i.gi.letters[i];
             if (l.timesUsed >= mostUsedLetterUses) {
                 mostUsedLetterUses = l.timesUsed;
                 mostUsedLetter = l.letter;

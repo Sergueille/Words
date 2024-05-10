@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using System.Runtime.InteropServices;
-using System.Linq.Expressions;
 
 public class GameManager : MonoBehaviour
 {   
@@ -21,6 +20,7 @@ public class GameManager : MonoBehaviour
     
     public float scoreExpMultiplier = 20.0f;
     public float scoreExpSpeed = 0.15f;
+    public int thousandLevel = 23;
 
     public Transform inputParent;
     public GameObject inputLetterPrefab;
@@ -36,8 +36,6 @@ public class GameManager : MonoBehaviour
     /// This is the list of Bonus GameObjects. It is reconstructed from gi.bonuses on load.
     /// </summary>
     public List<Bonus> bonuses;
-
-    public Letter[] letters;
 
     public TextMeshProUGUI errorText;
     public TextMeshProUGUI currentScoreText;
@@ -71,27 +69,26 @@ public class GameManager : MonoBehaviour
         Word.Init();
         HideError(true);
         Keyboard.i.Init();
-        letters = new Letter[26]; // Create a trash array so the keyboard doesn't throw errors 
+
+        // Create trash gameInfo so the keyboard doesn't throw errors 
+        gi = new GameInfo {
+            letters = new Letter[26],
+            gameStats = new Stats(),
+            bonuses = new BonusInfo[MAX_BONUS],
+        };
     }
 
     public void StartNewRun()
     {
         PanelsManager.i.SelectPanel("Main", false);
         PanelsManager.i.ToggleGameUI(true);
-
-        gi = new GameInfo {
-            lettersCopy = new Letter.LetterStruct[26],
-            gameStats = new Stats(),
-            bonuses = new BonusInfo[MAX_BONUS],
-        };
-
         bonusFullPanel.SetActive(false);
 
         bonuses = new List<Bonus>();
 
         // Reset letters
         for (int i = 0; i < 26; i++) {
-            letters[i] = new Letter {
+            gi.letters[i] = new Letter {
                 letter = (char)((int)'A' + i),
                 Level = rareLetters.Contains((char)((int)'A' + i)) ? 2 : 1,
             };
@@ -164,7 +161,7 @@ public class GameManager : MonoBehaviour
     public Letter GetLetterFromChar(char c)
     {
         char lower = char.ToLower(c);
-        return letters[(int)lower - (int)'a'];
+        return gi.letters[(int)lower - (int)'a'];
     }
 
     public void Update() 
@@ -450,7 +447,7 @@ public class GameManager : MonoBehaviour
         // Create a copy of the letters, so that the modifications can be reverted
         Letter[] lettersCopy = new Letter[26];
         for (int i = 0; i < 26; i++) {
-            lettersCopy[i] = letters[i].Clone() as Letter;
+            lettersCopy[i] = gi.letters[i].Clone() as Letter;
         }
 
         foreach (Bonus bonus in bonuses)
@@ -464,7 +461,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Put the old letters back!
-        letters = lettersCopy;
+        gi.letters = lettersCopy;
 
         return total;
     }
@@ -494,6 +491,8 @@ public class GameManager : MonoBehaviour
 
     private int GetLevelTargetScore()
     {
+        if (gi.currentLevel == thousandLevel) return 1000;
+
         return Mathf.FloorToInt(scoreExpMultiplier * Mathf.Exp(gi.currentLevel * scoreExpSpeed));
     }
 
@@ -559,6 +558,7 @@ public class GameManager : MonoBehaviour
     public bool CloneBonus(Bonus b)
     {
         Bonus clone = Instantiate(b.gameObject).GetComponent<Bonus>();
+        clone.info = (BonusInfo)b.info.Clone();
         return AddBonus(clone);
     }
     
@@ -571,7 +571,7 @@ public class GameManager : MonoBehaviour
 
         bonuses.Clear();
 
-        for (int i = 0; i < GameManager.i.gi.bonusCount; i++)
+        for (int i = 0; i < GameManager.i.gi.bonuses.Length; i++)
         {
             Bonus b = Instantiate(bonusPrefab, bonusParent).GetComponent<Bonus>();
             b.Init(gi.bonuses[i]);
@@ -621,7 +621,7 @@ public class GameManager : MonoBehaviour
     public Letter GetNthMostImprovedLetter(int n) 
     {
         Letter[] copy = new Letter[26]; 
-        System.Array.Copy(letters, 0, copy, 0, 26);
+        System.Array.Copy(gi.letters, 0, copy, 0, 26);
         System.Array.Sort(copy);
 
         return copy[26 - n];
@@ -634,8 +634,9 @@ public class GameManager : MonoBehaviour
     }
 }
 
-[StructLayout(LayoutKind.Sequential)]
+[System.Serializable]
 public struct GameInfo {
+    [System.Serializable]
     public enum State {
         Ingame, Improvement, Bonus, Curse, Blessing 
     }
@@ -643,15 +644,16 @@ public struct GameInfo {
     public State state;
     public int currentLevel;
 
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = GameManager.MAX_BONUS)]
+    [SerializeField]
     public BonusInfo[] bonuses;
-    public int bonusCount; // Info for reading the file, don't use it
     
     // Not the actual letters! Just a copy for the save! See GameManager.letters
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 26)]
-    public Letter.LetterStruct[] lettersCopy;
+    [SerializeField]
+    public Letter[] letters;
 
     public Random.State randomState;
+    
+    [SerializeField]
     public Stats gameStats;
 
     public int levelWords;

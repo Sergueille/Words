@@ -186,7 +186,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             new BonusSpawner {
                 weight = 1.0f,
                 data = () => {
-                    char letter = Util.GetRandomElement(new char[] { 'N', 'R', 'I' });
+                    char letter = Util.GetRandomElement(new char[] { 'N', 'R', 'I', 'H' });
 
                     return new BonusInfo {
                         type = BonusType.Everywhere,
@@ -197,7 +197,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             new BonusSpawner {
                 weight = 1.0f,
                 data = () => {
-                    char letter = Util.GetRandomElement(new char[] { 'N', 'R', 'I' });
+                    char letter = Util.GetRandomElement(new char[] { 'N', 'R', 'I', 'H' });
 
                     return new BonusInfo {
                         type = BonusType.Forbidden,
@@ -231,7 +231,15 @@ public class Bonus : MonoBehaviour, System.ICloneable
                         stringArg = letter.ToString(),
                     };
                 }
-            }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.Constant,
+                    };
+                }
+            },
         });
 
         return bonusGetter();
@@ -591,8 +599,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             if (word.Length == 4)
             {
-                char[] lettersToImprove = new char[4];
-
                 for (int i = 0; i < 4; i++)
                 {
                     GameManager.i.ImproveLetter(word[i]);
@@ -696,6 +702,45 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 score = 0,
             };
         }
+        else if (info.type == BonusType.Constant)
+        {
+            int firstLevel = GameManager.i.GetLetterFromChar(word[0]).Level;
+            bool ok = true;
+
+            for (int i = 1; i < word.Length; i++)
+            {
+                if (firstLevel != GameManager.i.GetLetterFromChar(word[i]).Level)
+                {
+                    ok = false;
+                    break;
+                }
+            }
+
+            if (ok)
+            {
+                int score = 0;
+                foreach (char c in word)
+                {
+                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
+                }
+                
+                GameManager.i.ImproveLetter(word[0]);
+                if (word.Length > 1)
+                    GameManager.i.ImproveLetter(word[1]);
+
+                return new BonusAction {
+                    isAffected = true,
+                    score = score,
+                };
+            }
+            else 
+            {                
+                return new BonusAction {
+                    isAffected = false,
+                    score = 0,
+                };
+            }
+        }
         else
         {
             throw new System.Exception("Missing branch!");
@@ -770,7 +815,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.ShortWord)
         {
-            return "Sort word";
+            return "Short word";
         }
         else if (info.type == BonusType.RareLetters)
         {
@@ -787,6 +832,10 @@ public class Bonus : MonoBehaviour, System.ICloneable
         else if (info.type == BonusType.Consonants)
         {
             return "Consonants";
+        }
+        else if (info.type == BonusType.Constant)
+        {
+            return "Constant";
         }
         else
         {
@@ -880,6 +929,10 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return $"Improves a random consonant in the word.";
         }
+        else if (info.type == BonusType.Constant)
+        {
+            return $"If all the letters of the word have the same level, improves the first two letters and give as many points the word would give alone.";
+        }
         else 
         {
             throw new System.Exception("Missing branch!");
@@ -939,14 +992,31 @@ public class Bonus : MonoBehaviour, System.ICloneable
     }
 }
 
-[StructLayout(LayoutKind.Sequential)]
-public struct BonusInfo
+[System.Serializable]
+public struct BonusInfo : System.ICloneable
 {
     public BonusType type;
     public string stringArg;
     public int intArg;
+
+    public override bool Equals(object obj)
+    {
+        if (obj is BonusInfo other)
+        {
+            return other.type == this.type
+                && other.stringArg == this.stringArg
+                && other.intArg == this.intArg;
+        }
+        else return false;
+    }
+
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
 
+[System.Serializable]
 public enum BonusType {
     TwoLetters,
     Consonants,
@@ -969,6 +1039,7 @@ public enum BonusType {
     Concentrate,
     RelativeNumbers,
     Charged,
+    Constant,
 }
 
 

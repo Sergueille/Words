@@ -7,12 +7,22 @@ public class ThemedObject : MonoBehaviour
     public string propertyName;
     public ColorManager.ThemeColor color;
 
+    private Color currentColor = new Color(-1, -1, -1, -1); 
+
     private void Start() {
         ColorManager.i.objects.Add(this);
     }
 
     private void Update() {
         Color targetColor = ColorManager.i.GetColor(color);
+
+        if (targetColor == currentColor)
+        {
+            return;
+        }
+
+        currentColor = targetColor;
+
         System.Type type = targetComponent.GetType();
         var property = type.GetProperty(propertyName, 
             System.Reflection.BindingFlags.FlattenHierarchy 
@@ -43,9 +53,5 @@ public class ThemedObject : MonoBehaviour
 
     private void OnDestroy() {
         ColorManager.i.objects.Remove(this);
-    }
-
-    public void SetColor() {
-
     }
 }

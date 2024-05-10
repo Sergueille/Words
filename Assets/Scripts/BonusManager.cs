@@ -29,6 +29,8 @@ public class BonusManager : MonoBehaviour
 
             finished = false;
 
+            List<BonusInfo> created = new List<BonusInfo>();
+
             for (int i = 0; i < choiceCount; i++) 
             {
                 Bonus bonus = Instantiate(bonusPrefab, bonusParent).GetComponent<Bonus>();
@@ -39,7 +41,8 @@ public class BonusManager : MonoBehaviour
                 };
                 bonus.popupActionText = "Select";
 
-                bonus.Init(Bonus.GetRandomBonus());
+                bonus.Init(CreateNotRedundantBonus(created));
+                created.Add(bonus.info);
             }
 
             yield return new WaitUntil(() => finished);
@@ -56,5 +59,36 @@ public class BonusManager : MonoBehaviour
     public void Skip()
     {
         finished = true;
+    }
+
+    private BonusInfo CreateNotRedundantBonus(List<BonusInfo> alreadyCreated)
+    {
+        while (true) {
+            BonusInfo random = Bonus.GetRandomBonus();
+
+            bool ok = true;
+            foreach (Bonus b in GameManager.i.bonuses)
+            {
+                if (b.info.Equals(random))
+                {
+                    ok = false;
+                    break;
+                }
+            }
+
+            foreach (BonusInfo b in alreadyCreated)
+            {
+                if (b.Equals(random))
+                {
+                    ok = false;
+                    break;
+                }
+            }
+
+            if (ok)
+            {
+                return random;
+            }
+        }
     }
 }
