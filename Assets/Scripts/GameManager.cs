@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using System.Runtime.InteropServices;
+using Unity.Collections;
 
 public class GameManager : MonoBehaviour
 {   
@@ -14,6 +15,7 @@ public class GameManager : MonoBehaviour
     
     public int minWordLength = 3;
     public int maxWordLength = 12;
+    public int maxWordLengthWithBonus = 16;
     public int wordsPerLevel = 3;
     public int blessingPointsLimit = 6;
     public string rareLetters = "JQXZ";
@@ -201,9 +203,9 @@ public class GameManager : MonoBehaviour
     {        
         int currentScore;
         
-        if (CheckIfWordAllowed())
+        if (CheckIfWordAllowed(inputWord))
         {
-            currentScore = ComputeWordScore(true, false);
+            currentScore = ComputeWordScore(inputWord, true, false);
         }
         else
         {
@@ -218,21 +220,23 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Will trigger error animation     
     /// </summary>
-    public bool CheckIfWordAllowed()
+    public bool CheckIfWordAllowed(string word)
     {        
-        if (!Word.IsWordAllowed(inputWord)) 
+        int maxLen = GetMaxWordLength();
+
+        if (!Word.IsWordAllowed(word)) 
         {
             ShowError("This isn't a word");
         }
-        else if (inputWord.Length > maxWordLength) 
+        else if (word.Length > maxLen) 
         {
-            ShowError($"The word should have at most {maxWordLength} letters");
+            ShowError($"The word should have at most {maxLen} letters");
         }
-        else if (inputWord.Length < minWordLength) 
+        else if (word.Length < minWordLength) 
         {
             ShowError($"The word should have at least {minWordLength} letters");
         }
-        else if (!currentConstraint.IsWordAllowed(inputWord))
+        else if (!currentConstraint.IsWordAllowed(word))
         {
             ShowError("The constraint isn't respected");
         }
@@ -245,6 +249,18 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
+    public int GetMaxWordLength()
+    {
+        foreach (Bonus b in bonuses)
+        {
+            if (b.info.type == BonusType.LongWord)
+            {
+                return maxWordLengthWithBonus;
+            }
+        }
+
+        return maxWordLength;
+    }
 
     public void SubmitWord() 
     {
@@ -256,9 +272,9 @@ public class GameManager : MonoBehaviour
 
         IEnumerator<YieldInstruction> Coroutine() 
         {
-            if (CheckIfWordAllowed())
+            if (CheckIfWordAllowed(inputWord))
             {
-                int score = ComputeWordScore(false, true);
+                int score = ComputeWordScore(inputWord, false, true);
                 yield return StartCoroutine(TriggerBonuses());
                 
                 UpdateTotalScore(gi.totalScore + score, false);
@@ -431,12 +447,12 @@ public class GameManager : MonoBehaviour
         currentConstraint = Constraint.GetRandomConstraint();
     }
 
-    private int ComputeWordScore(bool showBonusInterface, bool lettersActuallyScore)
+    private int ComputeWordScore(string word, bool showBonusInterface, bool lettersActuallyScore)
     {
         int total = 0;
 
         // Get the points from the letters
-        foreach (char c in inputWord)
+        foreach (char c in word)
         {
             Letter l = GetLetterFromChar(c);
             total += l.GetScore(lettersActuallyScore);
@@ -452,7 +468,7 @@ public class GameManager : MonoBehaviour
 
         foreach (Bonus bonus in bonuses)
         {
-            BonusAction a = bonus.ScoreWithInterface(inputWord, showBonusInterface);
+            BonusAction a = bonus.ScoreWithInterface(word, showBonusInterface);
 
             if (a.isAffected)
             {
@@ -489,7 +505,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private int GetLevelTargetScore()
+    public int GetLevelTargetScore()
     {
         if (gi.currentLevel == thousandLevel) return 1000;
 
@@ -631,6 +647,44 @@ public class GameManager : MonoBehaviour
     {
         gi.blessingPoints = newValue;
         blessingCounter.SetValue(gi.blessingPoints);
+    }
+
+    /// <summary>
+    /// Return the word with the highest score
+    /// </summary>
+    public IEnumerator<object> FindBestWord(System.Action<string, int> onFind)
+    {
+        int bestScore = -99999;
+        string bestWord = "";
+
+        int i = 0;
+        foreach (KeyValuePair<string, GameWord> pair in Word.words)
+        {
+            if (!CheckIfWordAllowed(pair.Key)) 
+                continue;
+
+            int wordScore = ComputeWordScore(pair.Key, false, false);
+
+            if (wordScore > bestScore)
+            {
+                bestScore = wordScore;
+                bestWord = pair.Key;
+            }
+
+            if (i % 10000 == 0)
+                yield return new WaitForEndOfFrame();
+
+            i++;
+        }
+
+        onFind(bestWord, bestScore);
+    }
+
+    public void ReturnToMenu()
+    {
+        PanelsManager.i.SelectPanel("MainMenu", false);
+        ColorManager.i.SetTheme("menu", false);
+        PanelsManager.i.ToggleGameUI(false);
     }
 }
 

@@ -294,10 +294,20 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Luck",
-                    description = "Take two random benedictions (including this benediction).",
+                    description = "Take two random blessing (including this blessing).",
                     onCall = () => {
                         GetRandomBlessing().onCall();
                         GetRandomBlessing().onCall();
+                    }
+                }
+            },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
+                    name = "Time travel",
+                    description = "The required score will be the one of the previous level.",
+                    onCall = () => {
+                        GameManager.i.gi.currentLevel--;
                     }
                 }
             },

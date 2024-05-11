@@ -9,6 +9,7 @@ public class GameEndManager : MonoBehaviour
     public TextMeshProUGUI bestScoreText;
     public TextMeshProUGUI wordCountText;
     public TextMeshProUGUI mostUsedLetterText;
+    public TextMeshProUGUI bestWordText;
 
     private void Awake()
     {
@@ -24,6 +25,10 @@ public class GameEndManager : MonoBehaviour
     }
     
     public void Do() {
+        StartCoroutine(GameManager.i.FindBestWord((word, score) => {
+            bestWordText.text = $"The best word for this level was {Util.DecorateArgument(word)} ({Util.DecorateArgument(score)} points)";
+        }));
+
         PanelsManager.i.SelectPanel("GameEnd", false);
     }
 

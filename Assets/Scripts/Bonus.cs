@@ -3,6 +3,7 @@ using TMPro;
 
 using BonusSpawner = Util.Spawner<System.Func<BonusInfo>>;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 public class Bonus : MonoBehaviour, System.ICloneable
 {
@@ -237,6 +238,30 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.Constant,
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.Diversity,
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 0.8f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.Effects,
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.LongWord,
                     };
                 }
             },
@@ -652,7 +677,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
 
             return new BonusAction {
                 isAffected = true,
-                score = 3 * worstLevel,
+                score = 5 * worstLevel,
             };
         }
         else if (info.type == BonusType.BestCopy)
@@ -740,6 +765,63 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     score = 0,
                 };
             }
+        }
+        else if (info.type == BonusType.Diversity)
+        {
+            bool[] used = new bool[26];
+
+            foreach (char c in word)
+            {
+                if (used[c - 'A']) 
+                {
+                    return new BonusAction {
+                        isAffected = false,
+                        score = 0,
+                    };
+                }
+                else
+                {
+                    used[c - 'A'] = true;
+                }
+            }
+
+            foreach (char c in word)
+            {
+                if (Util.IsVowel(c))
+                {
+                    GameManager.i.ImproveLetter(c);
+                }
+            }
+
+            return new BonusAction {
+                isAffected = true,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.Effects)
+        {
+            bool affected = false;
+
+            foreach (char c in word)
+            {
+                if (GameManager.i.GetLetterFromChar(c).effect == Letter.Effect.None)
+                {
+                    GameManager.i.ImproveLetter(c);
+                    affected = true;
+                }
+            }
+
+            return new BonusAction {
+                isAffected = affected,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.LongWord)
+        {
+            return new BonusAction {
+                isAffected = word.Length > 12,
+                score = 0,
+            };
         }
         else
         {
@@ -837,6 +919,18 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return "Constant";
         }
+        else if (info.type == BonusType.Diversity)
+        {
+            return "Diversity";
+        }
+        else if (info.type == BonusType.Effects)
+        {
+            return "Effects";
+        }
+        else if (info.type == BonusType.LongWord)
+        {
+            return "Long words";
+        }
         else
         {
             throw new System.Exception("Missing branch!");
@@ -871,7 +965,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.OOO)
         {
-            return $"Improves the letters located directly after an {Util.DecorateArgument("O")}";
+            return $"Improves the letters located directly after an {Util.DecorateArgument("O")}.";
         }
         else if (info.type == BonusType.Palindrome)
         {
@@ -899,11 +993,11 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.MoreVowels)
         {
-            return "If the word has strictly more vowels than consonants, improves every letter of the word";
+            return "If the word has strictly more vowels than consonants, improves every letter of the word.";
         }
         else if (info.type == BonusType.Initial)
         {
-            return "Improves the first letter of the word";
+            return "Improves the first letter of the word.";
         }
         else if (info.type == BonusType.Double)
         {
@@ -919,11 +1013,11 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.WorstCopy)
         {
-            return "Looks for the least improved letter in the word, then adds 3 times its level to the score";
+            return "Looks for the least improved letter in the word, then adds 5 times its level to the score.";
         }
         else if (info.type == BonusType.BestCopy)
         {
-            return "Looks for the most improved letter in the word, then adds its level to the score";
+            return "Looks for the most improved letter in the word, then adds its level to the score.";
         }
         else if (info.type == BonusType.Consonants)
         {
@@ -933,7 +1027,19 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return $"If all the letters of the word have the same level, improves the first two letters and give as many points the word would give alone.";
         }
-        else 
+        else if (info.type == BonusType.Diversity)
+        {
+            return "If all the letters of the word are different, improves all the vowels of the word.";
+        }
+        else if (info.type == BonusType.Effects)
+        {
+            return "Improves all letters with an effect in the word.";
+        }
+        else if (info.type == BonusType.LongWord)
+        {
+            return "Allows you to write words up to 16 letters long.";
+        }
+        else
         {
             throw new System.Exception("Missing branch!");
         }
@@ -1040,6 +1146,9 @@ public enum BonusType {
     RelativeNumbers,
     Charged,
     Constant,
+    Diversity,
+    Effects,
+    LongWord
 }
 
 
