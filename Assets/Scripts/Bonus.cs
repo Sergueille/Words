@@ -250,7 +250,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 }
             },
             new BonusSpawner {
-                weight = 0.8f,
+                weight = 0.7f,
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.Effects,
@@ -262,6 +262,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.LongWord,
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 0.7f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.Sacrifice,
                     };
                 }
             },
@@ -748,10 +756,12 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 {
                     score += GameManager.i.GetLetterFromChar(c).GetScore(false);
                 }
-                
-                GameManager.i.ImproveLetter(word[0]);
-                if (word.Length > 1)
-                    GameManager.i.ImproveLetter(word[1]);
+
+                for (int i = 0; i < 5; i++)
+                {
+                    if (word.Length >= i + 1)
+                        GameManager.i.ImproveLetter(word[i]);
+                }
 
                 return new BonusAction {
                     isAffected = true,
@@ -821,6 +831,16 @@ public class Bonus : MonoBehaviour, System.ICloneable
             return new BonusAction {
                 isAffected = word.Length > 12,
                 score = 0,
+            };
+        }
+        
+        else if (info.type == BonusType.Sacrifice)
+        {
+            GameManager.i.GetLetterFromChar(word[0]).effect = Letter.Effect.Doomed;
+
+            return new BonusAction {
+                isAffected = true,
+                score = 40,
             };
         }
         else
@@ -931,6 +951,10 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return "Long words";
         }
+        else if (info.type == BonusType.Sacrifice)
+        {
+            return "Sacrifice";
+        }
         else
         {
             throw new System.Exception("Missing branch!");
@@ -1025,7 +1049,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Constant)
         {
-            return $"If all the letters of the word have the same level, improves the first two letters and give as many points the word would give alone.";
+            return $"If all the letters of the word have the same level, improves the first 5 letters and give as many points the word would give alone.";
         }
         else if (info.type == BonusType.Diversity)
         {
@@ -1038,6 +1062,10 @@ public class Bonus : MonoBehaviour, System.ICloneable
         else if (info.type == BonusType.LongWord)
         {
             return "Allows you to write words up to 16 letters long.";
+        }
+        else if (info.type == BonusType.Sacrifice)
+        {
+            return "Gives 40 points, but the first letter or the word becomes Doomed. Doomed letters will loose one level every time they score.";
         }
         else
         {
@@ -1148,7 +1176,8 @@ public enum BonusType {
     Constant,
     Diversity,
     Effects,
-    LongWord
+    LongWord,
+    Sacrifice,
 }
 
 

@@ -80,11 +80,13 @@ public class GameManager : MonoBehaviour
         };
     }
 
-    public void StartNewRun()
+    public void StartNewRun(GameMode mode)
     {
         PanelsManager.i.SelectPanel("Main", false);
         PanelsManager.i.ToggleGameUI(true);
         bonusFullPanel.SetActive(false);
+
+        gi.gameMode = mode;
 
         bonuses = new List<Bonus>();
 
@@ -109,6 +111,9 @@ public class GameManager : MonoBehaviour
 
         gi.currentLevel = -1;
         StartNewLevel();
+
+        // TEST!
+        Tutorial.i.StartTutorial();
     }
 
     public void LoadRun()
@@ -695,6 +700,8 @@ public struct GameInfo {
         Ingame, Improvement, Bonus, Curse, Blessing 
     }
 
+    public GameMode gameMode;
+
     public State state;
     public int currentLevel;
 
@@ -715,5 +722,10 @@ public struct GameInfo {
     public int blessingPoints;
 
     public string currentPanelName;
+}
+
+[System.Serializable]
+public enum GameMode {
+    Tutorial, Standard, Demanding, Intense, Cursed, MaxValue
 }
 

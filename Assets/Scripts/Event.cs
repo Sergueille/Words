@@ -50,7 +50,7 @@ public class Event : MonoBehaviour
                 }
             },
             new EventSpawner {
-                weight = 1.0f,
+                weight = 1.5f,
                 data = () => new EventInfo {
                     name = "Poisoning",
                     description = "Give the Poisonous effect to the most improved letter with no effect. Each time the letter scores, a random letter looses a level.",
@@ -160,7 +160,7 @@ public class Event : MonoBehaviour
             new EventSpawner {
                 weight = 1.5f,
                 data = () => {
-                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T', 'I', 'A' });
+                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T', 'I', 'A', 'R' });
                     return new EventInfo {
                         name = $"Doomed {letter}",
                         description = $"Gives the Doomed effect to {Util.DecorateArgument(letter)}. Each time the letter scores, it looses a level",
@@ -173,7 +173,7 @@ public class Event : MonoBehaviour
             new EventSpawner {
                 weight = 1.5f,
                 data = () => {
-                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T' });
+                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T', 'R' });
                     return new EventInfo {
                         name = $"Locked {letter}",
                         description = $"Gives the Locked effect to {Util.DecorateArgument(letter)}. The level of the letter won't change anymore.",
@@ -228,7 +228,7 @@ public class Event : MonoBehaviour
             new EventSpawner {
                 weight = 1.0f,
                 data = () => new EventInfo {
-                    name = "",
+                    name = "Multiplication",
                     description = "Multiplies the level of the most improved letter by 1.4 (rounded up)",
                     onCall = () => {
                         Letter l = GameManager.i.GetNthMostImprovedLetter(1);
@@ -305,7 +305,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Time travel",
-                    description = "The required score will be the one of the previous level.",
+                    description = "Go back to the previous level with your current bonuses. (Random elements will be different)",
                     onCall = () => {
                         GameManager.i.gi.currentLevel--;
                     }

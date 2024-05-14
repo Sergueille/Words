@@ -114,3 +114,80 @@ public static class Util
         public T data;
     }
 }
+
+[System.Serializable]
+public class MovementDescr
+{
+    public float duration;
+    public LeanTweenType easeType;
+    [System.NonSerialized] public LTDescr descr;
+    [System.NonSerialized] public int tweenID;
+
+    public virtual LTDescr Do(System.Action<float> callback)
+    {
+        callback(0);
+        descr = LeanTween.value(0, 1, duration).setOnUpdate(callback).setEase(easeType);
+        tweenID = descr.id;
+        return descr;
+    } 
+
+    public virtual LTDescr DoReverse(System.Action<float> callback)
+    {
+        callback(1);
+        descr = LeanTween.value(1, 0, duration).setOnUpdate(callback).setEase(easeType);
+        tweenID = descr.id;
+        return descr;
+    }
+
+    public LTDescr DoWithBounds(System.Action<float> callback, float start, float end)
+    {
+        callback(start);
+        descr = LeanTween.value(0, 1, duration).setOnUpdate(t => callback(start * (1 - t) + (end * t))).setEase(easeType);
+        tweenID = descr.id;
+        return descr;
+    } 
+
+    public LTDescr DoWithBounds(System.Action<Vector3> callback, Vector3 start, Vector3 end)
+    {
+        callback(start);
+        descr = LeanTween.value(0, 1, duration).setOnUpdate(t => callback(start * (1 - t) + (end * t))).setEase(easeType);
+        tweenID = descr.id;
+        return descr;
+    } 
+
+    public bool TryCancel()
+    {
+        if (descr == null)
+        {
+            return false;
+        }
+
+        LeanTween.cancel(tweenID);
+        descr = null;
+        tweenID = -1;
+
+        return true;
+    }
+}
+
+[System.Serializable]
+public class MovementDescrWithAmplitude : MovementDescr
+{
+    public float amplitude;
+    
+    public override LTDescr Do(System.Action<float> callback)
+    {
+        callback(0);
+        descr = LeanTween.value(0, amplitude, duration).setOnUpdate(callback).setEase(easeType);
+        tweenID = descr.id;
+        return descr;
+    } 
+
+    public override LTDescr DoReverse(System.Action<float> callback)
+    {
+        callback(amplitude);
+        descr = LeanTween.value(amplitude, 0, duration).setOnUpdate(callback).setEase(easeType);
+        tweenID = descr.id;
+        return descr;
+    }
+}
