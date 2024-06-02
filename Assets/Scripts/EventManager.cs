@@ -23,6 +23,11 @@ public class EventManager : MonoBehaviour
         StartCoroutine(Coroutine());
 
         IEnumerator<object> Coroutine() {
+            foreach (Transform child in eventParent)
+            {
+                Destroy(child.gameObject);
+            }
+            
             PanelsManager.i.SelectPanel("Event", false);
 
             if (curse) {
@@ -47,11 +52,6 @@ public class EventManager : MonoBehaviour
 
             yield return new WaitUntil(() => finished);
             yield return new WaitForSeconds(GameManager.i.bigDelay);
-
-            foreach (Transform child in eventParent)
-            {
-                Destroy(child.gameObject);
-            }
 
             onFinished();
         }

@@ -365,6 +365,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             GameManager.i.ImproveLetter(highest);
+            GameManager.i.ImproveLetter(highest);
             GameManager.i.GetLetterFromChar(lowest).Level -= 1;
 
             return new BonusAction {
@@ -675,17 +676,22 @@ public class Bonus : MonoBehaviour, System.ICloneable
         else if (info.type == BonusType.WorstCopy)
         {
             int worstLevel = 100000000;
+            Letter worstLetter = null;
 
             foreach (char c in word)
             {
                 Letter l = GameManager.i.GetLetterFromChar(c);
 
-                if (l.Level < worstLevel) worstLevel = l.Level;
+                if (l.Level < worstLevel) 
+                {
+                    worstLetter = l;
+                    worstLevel = l.Level;
+                }
             }
 
             return new BonusAction {
                 isAffected = true,
-                score = 5 * worstLevel,
+                score = 6 * worstLetter.GetScore(false),
             };
         }
         else if (info.type == BonusType.BestCopy)
@@ -977,7 +983,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Concentrate)
         {
-            return "Lower the level of the least improved letter in the word, and improves the level of the most improved letter in word. (Will improve the leftmost letter if many)";
+            return "Lower the level of the least improved letter in the word, and improves twice the level of the most improved letter in word. (Will choose the leftmost letters first)";
         }
         else if (info.type == BonusType.Forbidden)
         {
@@ -1037,7 +1043,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.WorstCopy)
         {
-            return "Looks for the least improved letter in the word, then adds 5 times its level to the score.";
+            return "Looks for the least improved letter in the word, then adds 6 times the points it would give to the score.";
         }
         else if (info.type == BonusType.BestCopy)
         {

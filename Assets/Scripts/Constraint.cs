@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public struct Constraint
 {
+    [System.Serializable]
     public enum ContraintType 
     {
         Contains,
@@ -12,8 +14,13 @@ public struct Constraint
         ContainsNot,
     }
 
+    [SerializeField]
     public ContraintType type;
+
+    [SerializeField]
     public string stringArg;
+    
+    [SerializeField]
     public int intArg;
 
     public static Constraint GetRandomConstraint()
@@ -115,5 +122,12 @@ public struct Constraint
             return $"Must NOT contain {Util.DecorateArgument(stringArg)}";
         }
         else throw new System.Exception("Branch missing!");
+    }
+
+    public bool IsEqualTo(Constraint other)
+    {
+        return this.type == other.type 
+            && this.intArg == other.intArg
+            && this.stringArg == other.stringArg;
     }
 }

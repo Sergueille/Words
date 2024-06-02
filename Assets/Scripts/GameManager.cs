@@ -1,18 +1,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using System.Runtime.InteropServices;
-using Unity.Collections;
 
 public class GameManager : MonoBehaviour
 {   
-    public const int MAX_BONUS = 4;
+    public const int MAX_BONUS = 5;
 
     public static GameManager i;
 
     [System.NonSerialized]
     public GameInfo gi;
-    
+
+    [System.NonSerialized]
+    public Progression progression;
+
     public int minWordLength = 3;
     public int maxWordLength = 12;
     public int maxWordLengthWithBonus = 16;
@@ -20,6 +21,7 @@ public class GameManager : MonoBehaviour
     public int blessingPointsLimit = 6;
     public string rareLetters = "JQXZ";
     
+    public float intenseScoreMultiplier = 1.5f;
     public float scoreExpMultiplier = 20.0f;
     public float scoreExpSpeed = 0.15f;
     public int thousandLevel = 23;
@@ -30,7 +32,7 @@ public class GameManager : MonoBehaviour
 
     private InputLetter[] inputLetters;
     private string inputWord;
-    private Constraint currentConstraint;
+    public Constraint currentConstraint;
 
     private int lastCurrentScore = -1;
 
@@ -72,6 +74,9 @@ public class GameManager : MonoBehaviour
         HideError(true);
         Keyboard.i.Init();
 
+        // Load user progression
+        SaveManager.LoadProgression();
+
         // Create trash gameInfo so the keyboard doesn't throw errors 
         gi = new GameInfo {
             letters = new Letter[26],
@@ -86,15 +91,27 @@ public class GameManager : MonoBehaviour
         PanelsManager.i.ToggleGameUI(true);
         bonusFullPanel.SetActive(false);
 
+        progression.alreadyPlayed = true;
+        progression.startedRun = true;
+        SaveManager.SaveProgression();
+
         gi.gameMode = mode;
 
         bonuses = new List<Bonus>();
 
         // Reset letters
         for (int i = 0; i < 26; i++) {
+            int score;
+            if (rareLetters.Contains((char)('A' + i))) {
+                score = 2;
+            }
+            else {
+                score = 1;
+            }
+
             gi.letters[i] = new Letter {
                 letter = (char)((int)'A' + i),
-                Level = rareLetters.Contains((char)((int)'A' + i)) ? 2 : 1,
+                Level = score,
             };
         }
 
@@ -112,8 +129,9 @@ public class GameManager : MonoBehaviour
         gi.currentLevel = -1;
         StartNewLevel();
 
-        // TEST!
-        Tutorial.i.StartTutorial();
+        if (mode == GameMode.Tutorial) {
+            Tutorial.i.StartTutorial();
+        }
     }
 
     public void LoadRun()
@@ -137,7 +155,7 @@ public class GameManager : MonoBehaviour
         if (gi.currentLevel % 2 == 0) {
             BonusManager.i.Do();
         }
-        else if (gi.currentLevel % 4 == 3) {
+        else if (gi.currentLevel % 4 == 3 || gi.gameMode == GameMode.Cursed) {
             EventManager.i.Do(true, StartNewLevel);
         }
         else {
@@ -233,6 +251,10 @@ public class GameManager : MonoBehaviour
         {
             ShowError("This isn't a word");
         }
+        else if (gi.gameMode == GameMode.Demanding && Word.words[word].timesUsed > 0) 
+        {
+            ShowError("You already used this word");
+        }
         else if (word.Length > maxLen) 
         {
             ShowError($"The word should have at most {maxLen} letters");
@@ -277,8 +299,17 @@ public class GameManager : MonoBehaviour
 
         IEnumerator<YieldInstruction> Coroutine() 
         {
+            // Prevent the user from submitting a word during the tutorial
+            if (Tutorial.i.TutorialPreventsAction) {
+                submissionAnimation = false;
+                yield break;
+            }
+
             if (CheckIfWordAllowed(inputWord))
             {
+                // Increment word une count
+                Word.words[inputWord].timesUsed++;
+
                 int score = ComputeWordScore(inputWord, false, true);
                 yield return StartCoroutine(TriggerBonuses());
                 
@@ -313,8 +344,8 @@ public class GameManager : MonoBehaviour
                 if (gi.totalScore >= GetLevelTargetScore())
                 {
                     Util.PingText(totalScoreText);
-                    ShakeCamera();
                     ParticlesManager.i.CircleParticles(totalScoreText.transform.position, 3.5f);
+                    ShakeCamera();
 
                     yield return new WaitForSeconds(smallDelay);
                     
@@ -329,11 +360,16 @@ public class GameManager : MonoBehaviour
                 else if (gi.levelWords >= wordsPerLevel - 1)
                 {
                     yield return new WaitForSeconds(bigDelay);    
-                    ColorManager.i.SetTheme("game_over", false);            
+                    ColorManager.i.SetTheme("game_over", false); 
+                    
+                    progression.startedRun = false;
+                    SaveManager.SaveProgression();   
+
                     GameEndManager.i.Do();
                     yield break;
                 }
 
+                Util.LeanTweenShake(totalScoreText.gameObject, 25, 0.4f);
                 gi.levelWords++;
                 SaveManager.SaveRun(GameInfo.State.Ingame);
 
@@ -449,7 +485,14 @@ public class GameManager : MonoBehaviour
 
     private void ChangeConstraint()
     {
-        currentConstraint = Constraint.GetRandomConstraint();
+        Constraint newConstraint = Constraint.GetRandomConstraint();
+
+        if (currentConstraint.IsEqualTo(newConstraint)) { // Prevent the game from showing twice the same constraint
+            ChangeConstraint();
+        }
+        else {
+            currentConstraint = newConstraint;
+        }
     }
 
     private int ComputeWordScore(string word, bool showBonusInterface, bool lettersActuallyScore)
@@ -496,7 +539,7 @@ public class GameManager : MonoBehaviour
             if (a.isAffected) {
                 Keyboard.i.UpdateAllKeys(true);
                 ParticlesManager.i.CircleParticles(bonus.transform.position, 2.5f);
-                ShakeCamera();
+                // ShakeCamera();
                 yield return new WaitForSeconds(smallDelay);
             }
         }
@@ -514,7 +557,8 @@ public class GameManager : MonoBehaviour
     {
         if (gi.currentLevel == thousandLevel) return 1000;
 
-        return Mathf.FloorToInt(scoreExpMultiplier * Mathf.Exp(gi.currentLevel * scoreExpSpeed));
+        float mult = gi.gameMode == GameMode.Intense ? intenseScoreMultiplier : 1.0f;
+        return Mathf.FloorToInt(mult * scoreExpMultiplier * Mathf.Exp(gi.currentLevel * scoreExpSpeed));
     }
 
     public void RemoveBonus(Bonus bonus)
@@ -555,7 +599,7 @@ public class GameManager : MonoBehaviour
         BonusPopup.i.HidePopup();
         ShowBonusPopup(false);
 
-        if (bonuses.Count >= MAX_BONUS) 
+        if (bonuses.Count >= GetMaxBonusCount()) 
         {
             ShowBonusPopup(true);
             return false;
@@ -655,9 +699,9 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Return the word with the highest score
+    /// Return the word with the highest score. Will wait until waitPredicate is false
     /// </summary>
-    public IEnumerator<object> FindBestWord(System.Action<string, int> onFind)
+    public IEnumerator<object> FindBestWord(System.Func<bool> waitPredicate, System.Action<string, int> onFind)
     {
         int bestScore = -99999;
         string bestWord = "";
@@ -676,11 +720,13 @@ public class GameManager : MonoBehaviour
                 bestWord = pair.Key;
             }
 
-            if (i % 10000 == 0)
+            if (i % 5000 == 0)
                 yield return new WaitForEndOfFrame();
 
             i++;
         }
+
+        yield return new WaitWhile(waitPredicate);
 
         onFind(bestWord, bestScore);
     }
@@ -690,6 +736,18 @@ public class GameManager : MonoBehaviour
         PanelsManager.i.SelectPanel("MainMenu", false);
         ColorManager.i.SetTheme("menu", false);
         PanelsManager.i.ToggleGameUI(false);
+    }
+
+    public int GetMaxBonusCount()
+    {
+        if (gi.gameMode == GameMode.Intense)
+        {
+            return 5;
+        }
+        else 
+        {
+            return 4;
+        }
     }
 }
 
@@ -719,6 +777,7 @@ public struct GameInfo {
 
     public int levelWords;
     public int totalScore;
+    public Constraint constraint;
     public int blessingPoints;
 
     public string currentPanelName;

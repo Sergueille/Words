@@ -14,6 +14,8 @@ public class BonusPopup : MonoBehaviour
 
     [SerializeField] private GameObject popupParent;
     [SerializeField] private CanvasGroup canvasGroup;
+
+    public bool isOpen = false;
     
     
     private void Awake()
@@ -24,6 +26,7 @@ public class BonusPopup : MonoBehaviour
 
     public void ShowPopup(string title, string description, System.Action onValidate, string btnText)
     {
+        isOpen = true;
         nameText.text = title;
         descriptionText.text = description;
 
@@ -40,6 +43,7 @@ public class BonusPopup : MonoBehaviour
 
     public void HidePopup()
     {
+        isOpen = false;
         LeanTween.scale(popupParent, Vector3.zero, 0.2f).setEaseInQuad();
         LeanTween.alphaCanvas(canvasGroup, 0, 0.2f).setOnComplete(() => {
             popupParent.SetActive(false);

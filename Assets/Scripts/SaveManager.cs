@@ -5,11 +5,14 @@ using UnityEngine;
 public static class SaveManager
 {
     public const string RUN_SAVE_NAME = "run";
+    public const string PROGRESS_SAVE_NAME = "progress";
 
     public static void SaveRun(GameInfo.State state)
     {
         GameManager.i.gi.randomState = Random.state;
         GameManager.i.gi.state = state;
+
+        GameManager.i.gi.constraint = GameManager.i.currentConstraint;
 
         GameManager.i.gi.bonuses = new BonusInfo[GameManager.i.bonuses.Count];
         for (int i = 0; i < GameManager.i.bonuses.Count; i++)
@@ -19,7 +22,6 @@ public static class SaveManager
 
         string txt = JsonUtility.ToJson(GameManager.i.gi, true);
         System.IO.File.WriteAllText(GetPath(RUN_SAVE_NAME), txt);
-        Debug.Log($"Saved at {Application.persistentDataPath}");
     }
 
     public static void LoadRun()
@@ -35,6 +37,7 @@ public static class SaveManager
         switch (GameManager.i.gi.state) {
             case GameInfo.State.Ingame:
                 GameManager.i.InitLevel();
+                GameManager.i.currentConstraint = GameManager.i.gi.constraint;
                 break;
             case GameInfo.State.Bonus:
                 BonusManager.i.Do();
@@ -51,6 +54,25 @@ public static class SaveManager
             default:
                 throw new System.Exception("Unreachable!");
         };
+    }
+
+    public static void SaveProgression()
+    {
+        string txt = JsonUtility.ToJson(GameManager.i.progression, true);
+        System.IO.File.WriteAllText(GetPath(PROGRESS_SAVE_NAME), txt);
+    }
+
+    public static void LoadProgression()
+    {
+        string path = GetPath(PROGRESS_SAVE_NAME);
+
+        if (System.IO.File.Exists(path)) {
+            string txt = System.IO.File.ReadAllText(path);
+            GameManager.i.progression = JsonUtility.FromJson<Progression>(txt);
+        }
+        else {
+            GameManager.i.progression = Progression.GetDefaultProgression();
+        }
     }
 
     private static byte[] GetBytes<T>(T obj)

@@ -183,6 +183,26 @@ public class Event : MonoBehaviour
                     };
                 }
             },
+            new EventSpawner {
+                weight = 0.8f,
+                data = () => {
+                    return new EventInfo {
+                        name = $"Randomization",
+                        description = $"Removes all bonuses, and give 3 random bonuses.",
+                        onCall = () => {
+                            while (GameManager.i.bonuses.Count > 0) {
+                                GameManager.i.RemoveBonus(GameManager.i.bonuses[0]);
+                            }
+
+                            for (int i = 0; i < 3; i++) {
+                                Bonus b = Instantiate(GameManager.i.bonusPrefab).GetComponent<Bonus>();
+                                b.Init(Bonus.GetRandomBonus());
+                                GameManager.i.AddBonus(b);
+                            }
+                        }
+                    };
+                }
+            },
         })();
     }
 

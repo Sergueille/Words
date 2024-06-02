@@ -18,7 +18,9 @@ public class Tutorial : MonoBehaviour
         public string description;
         public GameObject highlight = null;
         public PositionDirection positionDirection = PositionDirection.Up;
-        public System.Action<bool> predicate = null;
+        public System.Func<bool> predicate = null;
+        public bool preventAction = true;
+        public bool hiddenPanel = false;
     }
 
     public RectTransform popupParent;
@@ -26,6 +28,7 @@ public class Tutorial : MonoBehaviour
     public TextMeshProUGUI mainText;
     public Button popupButton;
     public Transform defaultPosition;
+    public Transform hiddenPosition;
     public RectTransform highlightGraphic;
     public RectTransform canvasTransform;
     public float marginAroundPopup;
@@ -37,14 +40,32 @@ public class Tutorial : MonoBehaviour
     private TutorialEntry[] entries;
 
     private int currentStep = 0;
+    public bool TutorialPreventsAction { get; private set; }
+    public bool IsTutorialActive { get; private set; }
 
     private void Awake()
     {
         i = this;
         popupParent.gameObject.SetActive(false);
         highlightGraphic.gameObject.SetActive(false);
+        TutorialPreventsAction = false;
+        IsTutorialActive = false;
     }
 
+    private void Update()
+    {
+        if (IsTutorialActive)
+        {
+            TutorialEntry entry = entries[currentStep];
+            if (entry.predicate != null)
+            {
+                if (entry.predicate())
+                {
+                    NextStep();
+                }
+            }
+        }
+    }
 
     public void StartTutorial()
     {
@@ -70,17 +91,61 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Basic rules",
-                description = "Each word must satisfy a constraint, shown here.",
+                description = "You can type any word, but it must satisfy a constraint, shown here.",
                 highlight = GameManager.i.constraintText.gameObject,
                 positionDirection = PositionDirection.Down,
             },
             new TutorialEntry {
                 title = "First level",
-                description = "Now, try to beat the first level.",
+                description = "Now, try to beat the first level. Try to use long words to make more points!",
+            },
+            new TutorialEntry {
+                preventAction = false,
+                hiddenPanel = true,
+                predicate = () => PanelsManager.i.GetCurrentPanelName() == "Bonus",
+            },
+            new TutorialEntry {
+                title = "Great!",
+                description = "You completed the first level! You can now choose a bonus!",
+            },
+            new TutorialEntry {
+                title = "Bonuses",
+                description = "Each bonus has a specific ability. They will allow you to improve your letters or make more points. Try one!",
+                highlight = BonusManager.i.bonusParent.gameObject,
+                predicate = () => BonusPopup.i.isOpen,
+                preventAction = false,
+            },
+            new TutorialEntry {
+                preventAction = false,
+                hiddenPanel = true,
+                predicate = () => PanelsManager.i.GetCurrentPanelName() == "Main",
+            },
+            new TutorialEntry {
+                title = "Almost finished",
+                description = "You can have up to 4 bonuses. You can click on them to see their abilities or to remove them.",
+                highlight = GameManager.i.bonusParent.gameObject,
+                positionDirection = PositionDirection.Down,
+            },
+            new TutorialEntry {
+                title = "Almost finished",
+                description = "When you complete a level using less than 3 words, each unused word increments this counter.",
+                highlight = GameManager.i.blessingCounter.gameObject,
+                positionDirection = PositionDirection.Down,
+            },
+            new TutorialEntry {
+                title = "Almost finished",
+                description = "If it's full, there will be a surprise!",
+                highlight = GameManager.i.blessingCounter.gameObject,
+                positionDirection = PositionDirection.Down,
+            },
+            new TutorialEntry {
+                title = "Objective",
+                description = "The required score each level will grow exponentially. Your objective is 1000 points. Good luck!",
             },
         };
 
-        Debug.Log("Hey!");
+        TutorialPreventsAction = true;
+        IsTutorialActive = true;
 
         popupParent.gameObject.SetActive(true);
         highlightGraphic.gameObject.SetActive(true);
@@ -92,16 +157,32 @@ public class Tutorial : MonoBehaviour
     public void NextStep()
     {
         currentStep++;
-        ShowStep(false);
+
+        if (currentStep < entries.Length)
+        {
+            ShowStep(false);
+        }
+        else 
+        {
+            TutorialPreventsAction = false;
+            IsTutorialActive = false;
+            popupParent.gameObject.SetActive(false);
+            highlightGraphic.gameObject.SetActive(false);
+        }
     }
 
     private void ShowStep(bool immediate)
     {
         TutorialEntry entry = entries[currentStep];
 
+        TutorialPreventsAction = entry.preventAction;
+
         // Set popup content
-        titleText.text = entry.title;
-        mainText.text = entry.description;
+        if (!entry.hiddenPanel) 
+        {
+            titleText.text = entry.title;
+            mainText.text = entry.description;
+        }
 
         // show button if not callback set
         popupButton.gameObject.SetActive(entry.predicate == null);
@@ -118,7 +199,14 @@ public class Tutorial : MonoBehaviour
 
         if (entry.highlight == null) {
             // Place popup on default position
-            targetPopupPosition = defaultPosition.localPosition;
+
+            if (entry.hiddenPanel) {
+                targetPopupPosition = hiddenPosition.localPosition;
+            }
+            else {
+                targetPopupPosition = defaultPosition.localPosition;
+            }
+
             targetHighlightPosition = new Vector2(0, 0);
             targetHighlightSize = canvasTransform.sizeDelta;
         }
@@ -131,42 +219,48 @@ public class Tutorial : MonoBehaviour
             targetHighlightPosition = highlightBounds.center;
             targetHighlightSize = highlightBounds.size;
 
-            // Make sure popup size will be up to date
-            LayoutRebuilder.ForceRebuildLayoutImmediate(canvasTransform);
+            if (entry.hiddenPanel) {
+                targetPopupPosition = hiddenPosition.localPosition;
+            }
+            else {
+                // Make sure popup size will be up to date
+                LayoutRebuilder.ForceRebuildLayoutImmediate(popupParent);
 
-            // Place popup
-            Vector2 distanceWithCenter = (Vector3)popupParent.sizeDelta * 0.5f + Vector3.one * marginAroundPopup + highlightBounds.size * 0.5f;
-            Vector2 boundsCenter = highlightBounds.center;
-            if (entry.positionDirection == PositionDirection.Up) {
-                targetPopupPosition = new Vector3(
-                    boundsCenter.x,
-                    boundsCenter.y + distanceWithCenter.y,
-                    0
-                );
+                // Place popup
+                Vector2 distanceWithCenter = (Vector3)popupParent.sizeDelta * 0.5f + Vector3.one * marginAroundPopup + highlightBounds.size * 0.5f;
+                Vector2 boundsCenter = highlightBounds.center;
+                if (entry.positionDirection == PositionDirection.Up) {
+                    targetPopupPosition = new Vector3(
+                        boundsCenter.x,
+                        boundsCenter.y + distanceWithCenter.y,
+                        0
+                    );
+                }
+                else if (entry.positionDirection == PositionDirection.Down) {
+                    targetPopupPosition = new Vector3(
+                        boundsCenter.x,
+                        boundsCenter.y - distanceWithCenter.y,
+                        0
+                    );
+                }
+                else if (entry.positionDirection == PositionDirection.Right) {
+                    targetPopupPosition = new Vector3(
+                        boundsCenter.x + distanceWithCenter.x,
+                        boundsCenter.y,
+                        0
+                    );
+                }
+                else if (entry.positionDirection == PositionDirection.Left) {
+                    targetPopupPosition = new Vector3(
+                        boundsCenter.x - distanceWithCenter.x,
+                        boundsCenter.y,
+                        0
+                    );
+                }
+                else throw new InvalidOperationException("Unreachable!");
             }
-            else if (entry.positionDirection == PositionDirection.Down) {
-                targetPopupPosition = new Vector3(
-                    boundsCenter.x,
-                    boundsCenter.y - distanceWithCenter.y,
-                    0
-                );
-            }
-            else if (entry.positionDirection == PositionDirection.Right) {
-                targetPopupPosition = new Vector3(
-                    boundsCenter.x + distanceWithCenter.x,
-                    boundsCenter.y,
-                    0
-                );
-            }
-            else if (entry.positionDirection == PositionDirection.Left) {
-                targetPopupPosition = new Vector3(
-                    boundsCenter.x - distanceWithCenter.x,
-                    boundsCenter.y,
-                    0
-                );
-            }
-            else throw new InvalidOperationException("Unreachable!");
         }
+        
 
         if (immediate) {
             popupParent.anchoredPosition = targetPopupPosition;

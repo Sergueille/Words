@@ -10,6 +10,9 @@ public class PanelsManager : MonoBehaviour
     public CanvasGroup topUI;
     public CanvasGroup bottomUI;
 
+    public MovementDescrWithAmplitude transition;
+    public MovementDescrWithAmplitude scaleTransition;
+
     private void Awake()
     {
         i = this;
@@ -24,19 +27,21 @@ public class PanelsManager : MonoBehaviour
 
     public void SelectPanel(string name, bool immediate)
     {
-        GameManager.i.gi.currentPanelName = name;
+        bool actuallyChanged = GameManager.i.gi.currentPanelName != name;
 
         foreach (GameObject panel in panels)
         {
             if (panel.name == name)
             {
-                ShowPanel(panel, immediate);
+                ShowPanel(panel, immediate || !actuallyChanged);
             }
             else
             {
-                HidePanel(panel, immediate);
+                HidePanel(panel, immediate || !actuallyChanged);
             }
         }
+
+        GameManager.i.gi.currentPanelName = name;
     }
 
     private void HidePanel(GameObject panel, bool immediate)
@@ -47,6 +52,17 @@ public class PanelsManager : MonoBehaviour
     private void ShowPanel(GameObject panel, bool immediate)
     {
         panel.SetActive(true);
+        RectTransform tr = panel.GetComponent<RectTransform>();
+
+        if (!immediate) {
+            transition.DoReverse(t => {
+                tr.sizeDelta = Vector2.one * t;
+            });
+
+            scaleTransition.DoReverse(t => {
+                tr.localScale = Vector2.one * (1 + t);
+            });
+        }
     }
 
     public string GetCurrentPanelName()

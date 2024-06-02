@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using JetBrains.Annotations;
 using UnityEngine;
 
 public static class Word 
@@ -19,6 +17,7 @@ public static class Word
             string trimmed = line.Trim();
             words.Add(trimmed, new GameWord {
                 word = trimmed,
+                timesUsed = 0,
             });
         }
     }
@@ -126,7 +125,8 @@ public class Letter : System.ICloneable, System.IComparable
 }
 
 
-public struct GameWord 
+public class GameWord 
 {
     public string word;
+    public int timesUsed;
 }

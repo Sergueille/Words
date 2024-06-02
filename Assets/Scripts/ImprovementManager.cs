@@ -24,6 +24,11 @@ public class ImprovementManager : MonoBehaviour
 
         IEnumerator<WaitUntil> Coroutine() 
         {
+            foreach (Transform child in lettersParent)
+            {
+                Destroy(child.gameObject);
+            }
+            
             PanelsManager.i.SelectPanel("ImproveLetter", false);
             ColorManager.i.SetTheme("improvement", false);
             SaveManager.SaveRun(GameInfo.State.Improvement);
@@ -55,11 +60,6 @@ public class ImprovementManager : MonoBehaviour
             }
 
             Keyboard.i.UpdateAllKeys(true);
-
-            foreach (Transform child in lettersParent)
-            {
-                Destroy(child.gameObject);
-            }
 
             GameManager.i.StartNewLevel();
         }

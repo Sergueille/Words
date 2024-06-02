@@ -25,9 +25,12 @@ public class GameEndManager : MonoBehaviour
     }
     
     public void Do() {
-        StartCoroutine(GameManager.i.FindBestWord((word, score) => {
-            bestWordText.text = $"The best word for this level was {Util.DecorateArgument(word)} ({Util.DecorateArgument(score)} points)";
-        }));
+        StartCoroutine(GameManager.i.FindBestWord(
+            ColorManager.i.ColorChangedThisFrame,
+            (word, score) => {
+                bestWordText.text = $"The best word for this level was {Util.DecorateArgument(word)} ({Util.DecorateArgument(score)} points)";
+            }
+        ));
 
         PanelsManager.i.SelectPanel("GameEnd", false);
     }

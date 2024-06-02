@@ -7,7 +7,7 @@ public class BonusManager : MonoBehaviour
 
     public int choiceCount = 4;
 
-    [SerializeField] private Transform bonusParent;
+    public Transform bonusParent;
     [SerializeField] private GameObject bonusPrefab;
 
     private bool finished;
@@ -23,6 +23,11 @@ public class BonusManager : MonoBehaviour
 
         IEnumerator<WaitUntil> Coroutine() 
         {
+            foreach (Transform child in bonusParent)
+            {
+                Destroy(child.gameObject);
+            }
+
             PanelsManager.i.SelectPanel("Bonus", false);
             ColorManager.i.SetTheme("bonus", false);
             SaveManager.SaveRun(GameInfo.State.Bonus);
@@ -46,19 +51,14 @@ public class BonusManager : MonoBehaviour
             }
 
             yield return new WaitUntil(() => finished);
-
-            foreach (Transform child in bonusParent)
-            {
-                Destroy(child.gameObject);
-            }
-
             GameManager.i.StartNewLevel();
         }
     }
 
     public void Skip()
     {
-        finished = true;
+        if (!Tutorial.i.IsTutorialActive)
+            finished = true;
     }
 
     private BonusInfo CreateNotRedundantBonus(List<BonusInfo> alreadyCreated)
