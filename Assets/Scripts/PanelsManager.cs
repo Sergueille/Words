@@ -13,11 +13,20 @@ public class PanelsManager : MonoBehaviour
     public MovementDescrWithAmplitude transition;
     public MovementDescrWithAmplitude scaleTransition;
 
+    public RectTransform transitionCircle;
+    public MovementDescrWithAmplitude circleTransition;
+    public MovementDescrWithAmplitude circleOutTransition;
+
     private void Awake()
     {
         i = this;
         SelectPanel(panels[0].name, true);
         ToggleGameUI(false);
+
+        transitionCircle.gameObject.SetActive(true);
+        transitionCircle.localScale = circleTransition.amplitude * Vector3.one;
+        circleOutTransition.DoReverse(t => transitionCircle.localScale = t * Vector3.one)
+            .setOnComplete(() => transitionCircle.gameObject.SetActive(false));
     }
 
     public void SelectPanel(GameObject panel)
@@ -70,10 +79,25 @@ public class PanelsManager : MonoBehaviour
         return GameManager.i.gi.currentPanelName;
     }
 
+    public void CircleTransition(System.Action callback)
+    {
+        transitionCircle.localScale = Vector3.zero;
+        transitionCircle.gameObject.SetActive(true);
+        circleTransition.Do(t => transitionCircle.localScale = t * Vector3.one)
+            .setOnComplete(() => {
+                callback();
+
+                circleOutTransition.DoReverse(t => transitionCircle.localScale = t * Vector3.one).setOnComplete(() => {
+                    transitionCircle.gameObject.SetActive(false);
+                });
+            });
+    }
+
     public void ToggleGameUI(bool enabled)
     {
         topUI.alpha = enabled ? 1 : 0;
         bottomUI.alpha = enabled ? 1 : 0;
+        bottomUI.gameObject.SetActive(enabled);
 
         topUI.interactable = enabled;
         bottomUI.interactable = enabled;

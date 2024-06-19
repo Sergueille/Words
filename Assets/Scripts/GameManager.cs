@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
     public float scoreExpSpeed = 0.15f;
     public int thousandLevel = 23;
 
+    public RectTransform canvasTransform;
+
     public Transform inputParent;
     public GameObject inputLetterPrefab;
     public Transform cameraTransform;
@@ -59,6 +61,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float shakeDuration;
     [SerializeField] private float shakeAmount;
 
+    public float verySmallDelay = 0.1f;
     public float smallDelay = 0.7f;
     public float bigDelay = 1.2f;
     
@@ -87,51 +90,55 @@ public class GameManager : MonoBehaviour
 
     public void StartNewRun(GameMode mode)
     {
-        PanelsManager.i.SelectPanel("Main", false);
-        PanelsManager.i.ToggleGameUI(true);
-        bonusFullPanel.SetActive(false);
+        PanelsManager.i.CircleTransition(() => {
+            PanelsManager.i.SelectPanel("Main", false);
+            PanelsManager.i.ToggleGameUI(true);
+            bonusFullPanel.SetActive(false);
 
-        progression.alreadyPlayed = true;
-        progression.startedRun = true;
-        SaveManager.SaveProgression();
+            ClearInput(true);
 
-        gi.gameMode = mode;
+            progression.alreadyPlayed = true;
+            progression.startedRun = true;
+            SaveManager.SaveProgression();
 
-        bonuses = new List<Bonus>();
+            gi.gameMode = mode;
 
-        // Reset letters
-        for (int i = 0; i < 26; i++) {
-            int score;
-            if (rareLetters.Contains((char)('A' + i))) {
-                score = 2;
+            bonuses = new List<Bonus>();
+
+            // Reset letters
+            for (int i = 0; i < 26; i++) {
+                int score;
+                if (rareLetters.Contains((char)('A' + i))) {
+                    score = 2;
+                }
+                else {
+                    score = 1;
+                }
+
+                gi.letters[i] = new Letter {
+                    letter = (char)((int)'A' + i),
+                    Level = score,
+                };
             }
-            else {
-                score = 1;
+
+            HideError(true);
+
+            Keyboard.i.UpdateAllKeys(false);
+
+            foreach (Transform t in bonusParent) 
+            {
+                Destroy(t.gameObject);
             }
 
-            gi.letters[i] = new Letter {
-                letter = (char)((int)'A' + i),
-                Level = score,
-            };
-        }
+            SetBlessingPoints(0);
 
-        HideError(true);
+            gi.currentLevel = -1;
+            StartNewLevel();
 
-        Keyboard.i.UpdateAllKeys(false);
-
-        foreach (Transform t in bonusParent) 
-        {
-            Destroy(t.gameObject);
-        }
-
-        SetBlessingPoints(0);
-
-        gi.currentLevel = -1;
-        StartNewLevel();
-
-        if (mode == GameMode.Tutorial) {
-            Tutorial.i.StartTutorial();
-        }
+            if (mode == GameMode.Tutorial) {
+                Tutorial.i.StartTutorial();
+            }
+        });
     }
 
     public void LoadRun()
@@ -139,9 +146,12 @@ public class GameManager : MonoBehaviour
         HideError(true);
         UpdateCurrentScoreText(0);
         bonusFullPanel.SetActive(false);
-        SaveManager.LoadRun();
-        Keyboard.i.UpdateAllKeys(false);
-        PanelsManager.i.ToggleGameUI(true);
+
+        PanelsManager.i.CircleTransition(() => {
+            SaveManager.LoadRun();
+            Keyboard.i.UpdateAllKeys(false);
+            PanelsManager.i.ToggleGameUI(true);
+        });
     }
 
     public void LevelCompleted()
@@ -371,9 +381,10 @@ public class GameManager : MonoBehaviour
 
                 Util.LeanTweenShake(totalScoreText.gameObject, 25, 0.4f);
                 gi.levelWords++;
-                SaveManager.SaveRun(GameInfo.State.Ingame);
 
                 InitLevel();
+
+                SaveManager.SaveRun(GameInfo.State.Ingame);
             }
 
             submissionAnimation = false;
@@ -457,14 +468,28 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Clears the input, triggering an animation
     /// </summary>
-    public void ClearInput() 
+    public void ClearInput(bool immediate = false) 
     {
-        foreach (Transform child in inputParent) 
-        {
-	        Destroy(child.gameObject);
+        inputWord = "";
+
+        if (immediate) {
+            foreach (Transform child in inputParent) {
+                Destroy(child.gameObject);
+            }
+        }
+        else {
+            StartCoroutine(Coroutine());
         }
 
-        inputWord = "";
+        IEnumerator<object> Coroutine() {
+            int count = inputParent.childCount;
+
+            for (int i = 0; i < count; i++)
+            {
+	            inputParent.GetChild(0).GetComponent<InputLetter>().DestroyWithAnimation(true);
+                yield return new WaitForSeconds(verySmallDelay);
+            }
+        }
     }
 
     /// <summary>
@@ -475,7 +500,7 @@ public class GameManager : MonoBehaviour
         if (inputWord.Length > 0) 
         {
             InputLetter lastLetter = inputParent.GetChild(inputParent.childCount - 1).GetComponent<InputLetter>();
-            lastLetter.DestroyWithAnimation();
+            lastLetter.DestroyWithAnimation(false);
 
             inputWord = inputWord.Remove(inputWord.Length - 1);
 
@@ -733,9 +758,12 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMenu()
     {
-        PanelsManager.i.SelectPanel("MainMenu", false);
         ColorManager.i.SetTheme("menu", false);
-        PanelsManager.i.ToggleGameUI(false);
+
+        PanelsManager.i.CircleTransition(() => {
+            PanelsManager.i.SelectPanel("MainMenu", false);
+            PanelsManager.i.ToggleGameUI(false);
+        });
     }
 
     public int GetMaxBonusCount()
@@ -777,7 +805,10 @@ public struct GameInfo {
 
     public int levelWords;
     public int totalScore;
+    
+    [SerializeField]
     public Constraint constraint;
+    
     public int blessingPoints;
 
     public string currentPanelName;

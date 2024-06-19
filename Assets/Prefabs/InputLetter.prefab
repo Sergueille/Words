@@ -51,6 +51,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayText: {fileID: 2402320433033865743}
   appearColor: {r: 0, g: 0, b: 0, a: 0}
+  goToScoreMovement:
+    duration: 0.2
+    easeType: 5
 --- !u!1 &5086104681752586580
 GameObject:
   m_ObjectHideFlags: 0

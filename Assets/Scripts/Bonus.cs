@@ -282,23 +282,19 @@ public class Bonus : MonoBehaviour, System.ICloneable
     {
         if (info.type == BonusType.TwoLetters)
         {
-            if (word.Contains(info.stringArg))
-            {
-                GameManager.i.ImproveLetter(info.stringArg[0]);
-                GameManager.i.ImproveLetter(info.stringArg[1]);
+            bool affected = false;
+            for (int i = 0; i < word.Length - 1; i++) {
+                if (word[i] == info.stringArg[0] && word[i + 1] == info.stringArg[1]) {
+                    GameManager.i.ImproveLetter(info.stringArg[0]);
+                    GameManager.i.ImproveLetter(info.stringArg[1]);
+                    affected = true;
+                }
+            }
 
-                return new BonusAction {
-                    isAffected = true,
-                    score = 0,
-                };
-            }
-            else
-            {
-                return new BonusAction {
-                    isAffected = false,
-                    score = 0,
-                };
-            }
+            return new BonusAction {
+                isAffected = affected,
+                score = 0,
+            };
         }
         else if (info.type == BonusType.Charged)
         {
@@ -971,7 +967,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
     {
         if (info.type == BonusType.TwoLetters)
         {
-            return $"If the word contains {Util.DecorateArgument(info.stringArg)}, improves these letters by one level.";
+            return $"Each time {Util.DecorateArgument(info.stringArg)} appears in a word, improves these letters by one level.";
         }
         else if (info.type == BonusType.Charged)
         {
@@ -1071,7 +1067,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Sacrifice)
         {
-            return "Gives 40 points, but the first letter or the word becomes Doomed. Doomed letters will loose one level every time they score.";
+            return "Gives 40 points, but the first letter of the word becomes Doomed. Doomed letters will loose one level every time they score.";
         }
         else
         {
