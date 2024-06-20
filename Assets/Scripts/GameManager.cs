@@ -64,6 +64,10 @@ public class GameManager : MonoBehaviour
     public float verySmallDelay = 0.1f;
     public float smallDelay = 0.7f;
     public float bigDelay = 1.2f;
+
+    public ParticleSystem confettis;
+
+    private bool shownThousandScreen = false;
     
     private void Awake()
     {
@@ -132,6 +136,8 @@ public class GameManager : MonoBehaviour
 
             SetBlessingPoints(0);
 
+            shownThousandScreen = false;
+
             gi.currentLevel = -1;
             StartNewLevel();
 
@@ -146,6 +152,7 @@ public class GameManager : MonoBehaviour
         HideError(true);
         UpdateCurrentScoreText(0);
         bonusFullPanel.SetActive(false);
+        shownThousandScreen = false;
 
         PanelsManager.i.CircleTransition(() => {
             SaveManager.LoadRun();
@@ -156,6 +163,14 @@ public class GameManager : MonoBehaviour
 
     public void LevelCompleted()
     {
+        if (!shownThousandScreen && gi.currentLevel == thousandLevel) {
+            shownThousandScreen = true;
+            PanelsManager.i.SelectPanel("Success", false);
+            ColorManager.i.SetTheme("success", false);
+            confettis.Play();
+            return;
+        }
+
         if (gi.blessingPoints >= blessingPointsLimit) {
             SetBlessingPoints(0);
             EventManager.i.Do(false, LevelCompleted);

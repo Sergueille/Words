@@ -39,7 +39,7 @@ Shader "Unlit/Circle"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
-                o.color = v.color;
+                o.color = float4(GammaToLinearSpace(v.color.rgb), v.color.a);
                 return o;
             }
 
