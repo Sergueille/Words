@@ -202,6 +202,7 @@ public class GameManager : MonoBehaviour
         PanelsManager.i.SelectPanel("Main", false);
         ColorManager.i.SetTheme("default", false);
         wordsCounter.SetValue(gi.levelWords + 1);
+        ClearInput(true);
         ChangeConstraint();
         UpdateTotalScore(gi.totalScore, true);
         UpdateCurrentScoreText(0);
@@ -338,8 +339,18 @@ public class GameManager : MonoBehaviour
                 int score = ComputeWordScore(inputWord, false, true);
                 yield return StartCoroutine(TriggerBonuses());
                 
-                UpdateTotalScore(gi.totalScore + score, false);
                 UpdateCurrentScoreText(0);
+
+                ClearInput();
+                
+                int steps = System.Math.Min(Mathf.FloorToInt(smallDelay * 30), score);
+
+                for (int i = 0; i < steps; i++) {
+                    int s = Mathf.CeilToInt(i / (float)(steps - 1) * score + gi.totalScore);
+                    totalScoreText.text = s.ToString();
+
+                    yield return new WaitForSeconds(smallDelay / steps);
+                } 
 
                 gi.gameStats.wordCount++;
 
@@ -361,10 +372,11 @@ public class GameManager : MonoBehaviour
                     }
                 }
 
-                ClearInput();
                 Keyboard.i.UpdateAllKeys(true);
 
                 submissionAnimation = false;
+
+                gi.totalScore += score;
 
                 if (gi.totalScore >= GetLevelTargetScore())
                 {

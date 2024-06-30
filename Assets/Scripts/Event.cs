@@ -64,6 +64,8 @@ public class Event : MonoBehaviour
                                 l.effect = Letter.Effect.Poisonous; 
                                 break;
                             }
+
+                            i--;
                         }
                     }
                 }

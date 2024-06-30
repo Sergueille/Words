@@ -18052,6 +18052,14 @@ PrefabInstance:
       propertyPath: maxValue
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 6550663836999193460, guid: 925bc5370e4c30843b4131c427d9a75c, type: 3}
+      propertyPath: circlesSize
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6550663836999193460, guid: 925bc5370e4c30843b4131c427d9a75c, type: 3}
+      propertyPath: circlesOnChange
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

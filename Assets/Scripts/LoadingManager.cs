@@ -10,7 +10,8 @@ public class LoadingManager : MonoBehaviour
     private void Start()
     {
         string[] tips = new string[] {
-            "Letters can only have one effect. That means giving electric effect to a letter will remove any negative effect from it.",
+            "Letters can only have one effect. You can remove unwanted effects from letters if you give them    another.",
+            "You can use changed bonuses to remove negative effects from letters. Make sure you don't accidentally remove good effects.",
             "Remember you can remove bonuses at any time.",
             "Making words with lower scores can allow you to write 3 words per level, so letters can be improved more.",
             "Short Word, Equalizer and Constant can work well together.",

@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using UnityEngine.Animations;
 
 public class InputLetter : MonoBehaviour
 {
@@ -11,8 +9,10 @@ public class InputLetter : MonoBehaviour
     [SerializeField] private Color appearColor;
     [SerializeField] private MovementDescr goToScoreMovement;
 
+    [SerializeField] private float goToScorePositionDelta;
 
-    [NonSerialized]
+
+    [System.NonSerialized]
     public char letter;
     public Letter Letter {
         get => GameManager.i.GetLetterFromChar(letter);
@@ -31,11 +31,13 @@ public class InputLetter : MonoBehaviour
     public void DestroyWithAnimation(bool goToScore) {
         transform.SetParent(GameManager.i.canvasTransform, true);
 
+        Vector2 delta = Random.insideUnitCircle * goToScorePositionDelta;
+
         if (goToScore) {
             goToScoreMovement.DoWithBounds(
                 (pos) => transform.localPosition = pos,
                 transform.localPosition,
-                GameManager.i.totalScoreText.transform.localPosition
+                GameManager.i.totalScoreText.transform.localPosition + new Vector3(delta.x, delta.y, 0)
             ).setOnComplete(() => {
                 Destroy(gameObject);
             });
