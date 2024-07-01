@@ -52,9 +52,9 @@ public class DotCounter : MonoBehaviour
         }
     }
 
-    public void SetValue(int newValue)
+    public void SetValue(int newValue, bool preventParticles = false)
     {
-        if (currentValue < newValue && circlesOnChange) {
+        if (currentValue < newValue && circlesOnChange && !preventParticles) {
             for (int i = currentValue; i < newValue; i++) {
                 ParticlesManager.i.CircleParticles(dots[i].transform.position, circlesSize);
             }

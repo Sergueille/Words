@@ -32,7 +32,7 @@ public static class SaveManager
         Random.state = GameManager.i.gi.randomState;
         PanelsManager.i.SelectPanel(GameManager.i.gi.currentPanelName, false);
         GameManager.i.CreateBonusUIFromGameInfo();
-        GameManager.i.SetBlessingPoints(GameManager.i.gi.blessingPoints);
+        GameManager.i.SetBlessingPoints(GameManager.i.gi.blessingPoints, true);
 
         switch (GameManager.i.gi.state) {
             case GameInfo.State.Ingame:
@@ -99,7 +99,7 @@ public static class SaveManager
         return res;
     }
 
-    private static string GetPath(string filename)
+    public static string GetPath(string filename)
     {
         return $"{Application.persistentDataPath}/{filename}.json";
     }

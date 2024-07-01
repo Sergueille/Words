@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class GameManager : MonoBehaviour
@@ -53,6 +54,14 @@ public class GameManager : MonoBehaviour
     public GameObject bonusPrefab;
     public GameObject bonusFullPanel;
     public DotCounter blessingCounter;
+    public Button continueBtn;
+    public Transform valueSelectParent;
+
+    public Transform cursor;
+    public Image cursorImage;
+    public float cursorBlinkSpeed = 1.2f;
+    public float lastCursorChangeTime; // Make sure the cursor is visible for a short period of time after all inputs
+    [System.NonSerialized] public int cursorPosition; // Index of letter AFTER the cursor
 
     private bool submissionAnimation = false;
 
@@ -79,10 +88,21 @@ public class GameManager : MonoBehaviour
     {
         Word.Init();
         HideError(true);
-        Keyboard.i.Init();
 
         // Load user progression
         SaveManager.LoadProgression();
+
+        if (progression.alreadyPlayed) {
+            SettingsManager.i.LoadSettingsFromFile();
+        }
+        else {
+            SettingsManager.i.SetDefaultSettings();
+        }
+        SettingsManager.i.InstantiateSettingsUI();
+
+        Keyboard.i.Init();
+
+        continueBtn.interactable = progression.startedRun;
 
         // Create trash gameInfo so the keyboard doesn't throw errors 
         gi = new GameInfo {
@@ -94,6 +114,8 @@ public class GameManager : MonoBehaviour
 
     public void StartNewRun(GameMode mode)
     {
+        if (PanelsManager.i.isTransitioning) return;
+
         PanelsManager.i.CircleTransition(() => {
             PanelsManager.i.SelectPanel("Main", false);
             PanelsManager.i.ToggleGameUI(true);
@@ -103,6 +125,8 @@ public class GameManager : MonoBehaviour
 
             progression.alreadyPlayed = true;
             progression.startedRun = true;
+            continueBtn.interactable = true;
+            
             SaveManager.SaveProgression();
 
             gi.gameMode = mode;
@@ -134,7 +158,7 @@ public class GameManager : MonoBehaviour
                 Destroy(t.gameObject);
             }
 
-            SetBlessingPoints(0);
+            SetBlessingPoints(0, true);
 
             shownThousandScreen = false;
 
@@ -149,6 +173,8 @@ public class GameManager : MonoBehaviour
 
     public void LoadRun()
     {
+        if (PanelsManager.i.isTransitioning) return;
+
         HideError(true);
         UpdateCurrentScoreText(0);
         bonusFullPanel.SetActive(false);
@@ -215,7 +241,7 @@ public class GameManager : MonoBehaviour
         return gi.letters[(int)lower - (int)'a'];
     }
 
-    public void Update() 
+    private void Update() 
     {
         // Record keys on computer
         if (Input.anyKeyDown)
@@ -245,6 +271,11 @@ public class GameManager : MonoBehaviour
 
         // Update constraint text
         constraintText.text = currentConstraint.GetDescription();
+
+        // Make cursor blink
+        cursorImage.enabled = 
+            Time.time < lastCursorChangeTime + cursorBlinkSpeed 
+         || Time.time % cursorBlinkSpeed > cursorBlinkSpeed / 2;
     }
 
 
@@ -273,7 +304,15 @@ public class GameManager : MonoBehaviour
     {        
         int maxLen = GetMaxWordLength();
 
-        if (!Word.IsWordAllowed(word)) 
+        if (word.Length == 0)
+        {
+            HideError(false);
+        }
+        else if (word.Length < minWordLength) 
+        {
+            ShowError($"The word should have at least {minWordLength} letters");
+        }
+        else if (!Word.IsWordAllowed(word)) 
         {
             ShowError("This isn't a word");
         }
@@ -284,10 +323,6 @@ public class GameManager : MonoBehaviour
         else if (word.Length > maxLen) 
         {
             ShowError($"The word should have at most {maxLen} letters");
-        }
-        else if (word.Length < minWordLength) 
-        {
-            ShowError($"The word should have at least {minWordLength} letters");
         }
         else if (!currentConstraint.IsWordAllowed(word))
         {
@@ -486,10 +521,15 @@ public class GameManager : MonoBehaviour
         InputLetter newLetter = Instantiate(inputLetterPrefab, inputParent).GetComponent<InputLetter>();
         newLetter.letter = c;
         newLetter.TriggerCreationAnimation();
+        newLetter.transform.SetSiblingIndex(cursorPosition);
 
-        inputWord = inputWord.Insert(inputWord.Length, c.ToString());
+        inputWord = inputWord.Insert(cursorPosition, c.ToString());
 
         UpdatePreviewInterface();
+
+        cursorPosition++;
+
+        lastCursorChangeTime = Time.time;
     }
 
     /// <summary>
@@ -498,10 +538,12 @@ public class GameManager : MonoBehaviour
     public void ClearInput(bool immediate = false) 
     {
         inputWord = "";
+        cursorPosition = 0;
 
         if (immediate) {
             foreach (Transform child in inputParent) {
-                Destroy(child.gameObject);
+                if (child != cursor)
+                    Destroy(child.gameObject);
             }
         }
         else {
@@ -513,6 +555,8 @@ public class GameManager : MonoBehaviour
 
             for (int i = 0; i < count; i++)
             {
+                if (i == cursorPosition) continue;
+
 	            inputParent.GetChild(0).GetComponent<InputLetter>().DestroyWithAnimation(true);
                 yield return new WaitForSeconds(verySmallDelay);
             }
@@ -520,18 +564,45 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Sets cursor position according to the mouse position
+    /// </summary>
+    public void SetCursorPosition() {
+        float mouseX = (Input.mousePosition.x / Screen.width - 0.5f) * canvasTransform.rect.width;
+
+        int position = 0;
+        int gotCursor = 0;
+        while (position + gotCursor < inputParent.childCount) {
+            Transform t = inputParent.GetChild(position + gotCursor);
+            if (t != cursor) {
+                if (t.localPosition.x > mouseX) break;
+
+                position++;
+            }
+            else {
+                gotCursor++;
+            }
+        }
+
+        cursor.SetSiblingIndex(position);
+        cursorPosition = position;
+    }
+
+    /// <summary>
     /// Removes a letter from the input word, triggering an animation
     /// </summary>
     public void EraseLastLetter() 
     {
-        if (inputWord.Length > 0) 
+        if (cursorPosition > 0) 
         {
-            InputLetter lastLetter = inputParent.GetChild(inputParent.childCount - 1).GetComponent<InputLetter>();
+            InputLetter lastLetter = inputParent.GetChild(cursorPosition - 1).GetComponent<InputLetter>();
             lastLetter.DestroyWithAnimation(false);
 
-            inputWord = inputWord.Remove(inputWord.Length - 1);
+            inputWord = inputWord.Remove(cursorPosition - 1, 1);
 
             UpdatePreviewInterface();
+
+            lastCursorChangeTime = Time.time;
+            cursorPosition--;
         }
     }
 
@@ -744,10 +815,10 @@ public class GameManager : MonoBehaviour
         return copy[26 - n];
     }
 
-    public void SetBlessingPoints(int newValue) 
+    public void SetBlessingPoints(int newValue, bool immediate = false) 
     {
         gi.blessingPoints = newValue;
-        blessingCounter.SetValue(gi.blessingPoints);
+        blessingCounter.SetValue(gi.blessingPoints, immediate);
     }
 
     /// <summary>
@@ -785,6 +856,8 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMenu()
     {
+        if (PanelsManager.i.isTransitioning) return;
+
         ColorManager.i.SetTheme("menu", false);
 
         PanelsManager.i.CircleTransition(() => {

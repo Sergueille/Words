@@ -17,11 +17,15 @@ public class PanelsManager : MonoBehaviour
     public MovementDescrWithAmplitude circleTransition;
     public MovementDescrWithAmplitude circleOutTransition;
 
+    public bool isTransitioning;
+
     private void Awake()
     {
         i = this;
         SelectPanel(panels[0].name, true);
         ToggleGameUI(false);
+
+        isTransitioning = false;
 
         transitionCircle.gameObject.SetActive(true);
         transitionCircle.localScale = circleTransition.amplitude * Vector3.one;
@@ -64,9 +68,10 @@ public class PanelsManager : MonoBehaviour
         RectTransform tr = panel.GetComponent<RectTransform>();
 
         if (!immediate) {
+            isTransitioning = true;
             transition.DoReverse(t => {
                 tr.sizeDelta = Vector2.one * t;
-            });
+            }).setOnComplete(() => isTransitioning = false);
 
             scaleTransition.DoReverse(t => {
                 tr.localScale = Vector2.one * (1 + t);
@@ -83,12 +88,15 @@ public class PanelsManager : MonoBehaviour
     {
         transitionCircle.localScale = Vector3.zero;
         transitionCircle.gameObject.SetActive(true);
+        isTransitioning = true;
+
         circleTransition.Do(t => transitionCircle.localScale = t * Vector3.one)
             .setOnComplete(() => {
                 callback();
 
                 circleOutTransition.DoReverse(t => transitionCircle.localScale = t * Vector3.one).setOnComplete(() => {
                     transitionCircle.gameObject.SetActive(false);
+                    isTransitioning = false;
                 });
             });
     }

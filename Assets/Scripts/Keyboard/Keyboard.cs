@@ -7,11 +7,12 @@ public class Keyboard : MonoBehaviour
     
     public GameObject linePrefab;
     public GameObject keyPrefab;
+    public GameObject spacePrefab;
     public GameObject backspacePrefab;
     public GameObject submitPrefab;
     public Transform keyboardParent;  
 
-    public string[] lines;
+    public string[] layouts;
 
     private Key[] keys;
 
@@ -30,19 +31,24 @@ public class Keyboard : MonoBehaviour
 
         int keyID = 0;
 
-        // Instantiate keys
-        for (int i = 0; i < lines.Length; i++)
+        string layout = layouts[(int)SettingsManager.i.settings.keyboardLayout];
+        GameObject lineObject = Instantiate(linePrefab, keyboardParent);
+
+        foreach (char c in layout) 
         {
-            string line = lines[i];
-
-            GameObject lineObject = Instantiate(linePrefab, keyboardParent);
-
-            if (i == lines.Length - 1) {
+            if (c == '|') {
+                lineObject = Instantiate(linePrefab, keyboardParent);
+            }
+            else if (c == '+') {
+                Instantiate(submitPrefab, lineObject.transform);
+            }
+            else if (c == '*') {
                 Instantiate(backspacePrefab, lineObject.transform);
             }
-
-            foreach (char c in line) 
-            {
+            else if (c == '\'') {
+                Instantiate(spacePrefab, lineObject.transform);
+            }
+            else {
                 Key key = Instantiate(keyPrefab, lineObject.transform).gameObject.GetComponent<Key>();
                 key.letter = c;
                 key.onPress = letter => { GameManager.i.InputLetter(letter); };
@@ -50,10 +56,6 @@ public class Keyboard : MonoBehaviour
                 keys[keyID] = key;
 
                 keyID++;
-            }
-
-            if (i == lines.Length - 1) {
-                Instantiate(submitPrefab, lineObject.transform);
             }
         }
     }

@@ -110,7 +110,7 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Bonuses",
-                description = "Each bonus has a specific ability. They will allow you to improve your letters or make more points. Try one!",
+                description = "Each bonus has a specific ability. They will allow you to improve your letters or make more points. Click on them to see what they do.",
                 highlight = BonusManager.i.bonusParent.gameObject,
                 predicate = () => BonusPopup.i.isOpen,
                 preventAction = false,
@@ -121,7 +121,7 @@ public class Tutorial : MonoBehaviour
                 predicate = () => PanelsManager.i.GetCurrentPanelName() == "Main",
             },
             new TutorialEntry {
-                title = "Almost finished",
+                title = "Bonuses",
                 description = "You can have up to 4 bonuses. You can click on them to see their abilities or to remove them.",
                 highlight = GameManager.i.bonusParent.gameObject,
                 positionDirection = PositionDirection.Down,
@@ -139,7 +139,7 @@ public class Tutorial : MonoBehaviour
                 positionDirection = PositionDirection.Down,
             },
             new TutorialEntry {
-                title = "Objective",
+                title = "Almost finished",
                 description = "The required score each level will grow exponentially. Your objective is 1000 points. Good luck!",
             },
         };
