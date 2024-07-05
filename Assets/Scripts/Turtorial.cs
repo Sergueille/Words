@@ -125,6 +125,16 @@ public class Tutorial : MonoBehaviour
                 description = "You can have up to 4 bonuses. You can click on them to see their abilities or to remove them.",
                 highlight = GameManager.i.bonusParent.gameObject,
                 positionDirection = PositionDirection.Down,
+                predicate = () => BonusPopup.i.isFullyOpen,
+                preventAction = false,
+            },
+            new TutorialEntry {
+                title = "Bonuses",
+                description = "We won't remove it for now.",
+                highlight = BonusPopup.i.dismissButton.gameObject,
+                positionDirection = PositionDirection.Down,
+                predicate = () => !BonusPopup.i.isOpen,
+                preventAction = false,
             },
             new TutorialEntry {
                 title = "Almost finished",
@@ -149,6 +159,8 @@ public class Tutorial : MonoBehaviour
 
         popupParent.gameObject.SetActive(true);
         highlightGraphic.gameObject.SetActive(true);
+
+        popupParent.parent.gameObject.SetActive(true);
 
         currentStep = 0;
         ShowStep(true);

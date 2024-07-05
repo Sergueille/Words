@@ -11,7 +11,7 @@ public class LoadingManager : MonoBehaviour
     {
         string[] tips = new string[] {
             "Letters can only have one effect. You can remove unwanted effects from letters if you give them another.",
-            "You can use changed bonuses to remove negative effects from letters. Make sure you don't accidentally remove good effects.",
+            "You can use Charged bonuses to remove negative effects from letters. Make sure you don't accidentally remove good effects.",
             "Remember you can remove bonuses at any time.",
             "Making words with lower scores can allow you to write 3 words per level, so letters can be improved more.",
             "The game will never propose a bonus you already have. However, you can copy them with benediction.",

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
 using TMPro;
 using UnityEngine;
 
@@ -45,7 +44,8 @@ public class EventManager : MonoBehaviour
 
             for (int i = 0; i < choiceCount; i++) {
                 Event ev = Instantiate(eventPrefab, eventParent).GetComponent<Event>();
-                ev.Init(curse, () => {
+                Event.EventInfo info = curse ? Event.GetRandomCurse() : Event.GetRandomBlessing();
+                ev.Init(info, curse, () => {
                     finished = true;
                 });
             }

@@ -32,6 +32,8 @@ public class GameEndManager : MonoBehaviour
             }
         ));
 
+        GameManager.i.continueBtn.gameObject.SetActive(false); // Hide continue button in main menu
+
         PanelsManager.i.SelectPanel("GameEnd", false);
     }
 

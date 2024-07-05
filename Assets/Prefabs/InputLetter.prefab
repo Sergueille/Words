@@ -54,7 +54,7 @@ MonoBehaviour:
   goToScoreMovement:
     duration: 0.2
     easeType: 26
-  goToScorePositionDelta: 20
+  goToScorePositionDelta: 100
 --- !u!1 &5086104681752586580
 GameObject:
   m_ObjectHideFlags: 0

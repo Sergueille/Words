@@ -109,6 +109,10 @@ public static class Util
         throw new System.Exception("Unreachable");
     }
 
+    public static string GetPercentage(float val) {
+        return Mathf.FloorToInt(val * 100).ToString();
+    }
+
     public struct Spawner<T> {
         public float weight;
         public T data;

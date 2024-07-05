@@ -32,6 +32,8 @@ public class GameManager : MonoBehaviour
     public Transform inputParent;
     public GameObject inputLetterPrefab;
     public Transform cameraTransform;
+    
+    public TextMeshProUGUI versionText;
 
     private InputLetter[] inputLetters;
     private string inputWord;
@@ -56,6 +58,16 @@ public class GameManager : MonoBehaviour
     public DotCounter blessingCounter;
     public Button continueBtn;
     public Transform valueSelectParent;
+
+    public TextMeshProUGUI[] progressTexts;
+    public TextMeshProUGUI[] completionProgressTexts;
+    public TextMeshProUGUI[] bonusesProgressTexts;
+    public TextMeshProUGUI[] cursesProgressTexts;
+    public TextMeshProUGUI[] benedictionsProgressTexts;
+
+    public Transform bonusListParent;
+    public Transform curseListParent;
+    public Transform blessingListParent;
 
     public Transform cursor;
     public Image cursorImage;
@@ -86,6 +98,11 @@ public class GameManager : MonoBehaviour
 
     private void Start() 
     {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+
+        versionText.text = Application.version;
+
         Word.Init();
         HideError(true);
 
@@ -102,7 +119,7 @@ public class GameManager : MonoBehaviour
 
         Keyboard.i.Init();
 
-        continueBtn.interactable = progression.startedRun;
+        continueBtn.gameObject.SetActive(progression.startedRun);
 
         // Create trash gameInfo so the keyboard doesn't throw errors 
         gi = new GameInfo {
@@ -110,6 +127,8 @@ public class GameManager : MonoBehaviour
             gameStats = new Stats(),
             bonuses = new BonusInfo[MAX_BONUS],
         };
+
+        UpdateProgressUI();
     }
 
     public void StartNewRun(GameMode mode)
@@ -125,7 +144,7 @@ public class GameManager : MonoBehaviour
 
             progression.alreadyPlayed = true;
             progression.startedRun = true;
-            continueBtn.interactable = true;
+            continueBtn.gameObject.SetActive(true);
             
             SaveManager.SaveProgression();
 
@@ -165,6 +184,8 @@ public class GameManager : MonoBehaviour
             gi.currentLevel = -1;
             StartNewLevel();
 
+            Debug.Log(mode);
+
             if (mode == GameMode.Tutorial) {
                 Tutorial.i.StartTutorial();
             }
@@ -189,6 +210,13 @@ public class GameManager : MonoBehaviour
 
     public void LevelCompleted()
     {
+        // Update best level in progress
+        if (gi.currentLevel > progression.bestLevels.Get((int)gi.gameMode))
+            progression.bestLevels.Set((int)gi.gameMode, gi.currentLevel);
+
+        SaveManager.SaveProgression();
+
+        // Show thousand screen
         if (!shownThousandScreen && gi.currentLevel == thousandLevel) {
             shownThousandScreen = true;
             PanelsManager.i.SelectPanel("Success", false);
@@ -197,6 +225,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // Receive blessing
         if (gi.blessingPoints >= blessingPointsLimit) {
             SetBlessingPoints(0);
             EventManager.i.Do(false, LevelCompleted);
@@ -301,7 +330,7 @@ public class GameManager : MonoBehaviour
     /// Will trigger error animation     
     /// </summary>
     public bool CheckIfWordAllowed(string word)
-    {        
+    {
         int maxLen = GetMaxWordLength();
 
         if (word.Length == 0)
@@ -678,7 +707,14 @@ public class GameManager : MonoBehaviour
 
     public int GetLevelTargetScore()
     {
-        if (gi.currentLevel == thousandLevel) return 1000;
+        if (gi.currentLevel == thousandLevel) {
+            if (gi.gameMode == GameMode.Intense) {
+                return 1500;   
+            }
+            else {
+                return 1000;    
+            }
+        }
 
         float mult = gi.gameMode == GameMode.Intense ? intenseScoreMultiplier : 1.0f;
         return Mathf.FloorToInt(mult * scoreExpMultiplier * Mathf.Exp(gi.currentLevel * scoreExpSpeed));
@@ -738,6 +774,10 @@ public class GameManager : MonoBehaviour
                 BonusPopup.i.HidePopup();
                 GameManager.i.RemoveBonus(bonus);
             };
+
+            progression.usedBonus.Set((int)bonus.info.type, true);
+
+            SaveManager.SaveProgression();
 
             return true;
         }
@@ -843,7 +883,7 @@ public class GameManager : MonoBehaviour
                 bestWord = pair.Key;
             }
 
-            if (i % 5000 == 0)
+            if (i % 1000 == 0)
                 yield return new WaitForEndOfFrame();
 
             i++;
@@ -856,7 +896,9 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMenu()
     {
-        if (PanelsManager.i.isTransitioning) return;
+        if (PanelsManager.i.isTransitioning || submissionAnimation) return;
+        
+        UpdateProgressUI();
 
         ColorManager.i.SetTheme("menu", false);
 
@@ -877,8 +919,96 @@ public class GameManager : MonoBehaviour
             return 4;
         }
     }
+
+    public void UpdateProgressUI() {
+        foreach (TextMeshProUGUI t in progressTexts) {
+            t.text = $"Progress ({Util.GetPercentage(progression.GetOverallProgression())}%)";
+        }
+        
+        foreach (TextMeshProUGUI t in completionProgressTexts) {
+            t.text = $"Game modes completed ({Util.GetPercentage(progression.GetCompletionProgression())}%)";
+        }
+        
+        foreach (TextMeshProUGUI t in bonusesProgressTexts) {
+            t.text = $"Bonuses discovered ({Util.GetPercentage(progression.GetBonusProgression())}%)";
+        }
+        
+        foreach (TextMeshProUGUI t in cursesProgressTexts) {
+            t.text = $"Curses discovered ({Util.GetPercentage(progression.GetCurseProgression())}%)";
+        }
+        
+        foreach (TextMeshProUGUI t in benedictionsProgressTexts) {
+            t.text = $"Blessings discovered ({Util.GetPercentage(progression.GetBenedictionProgression())}%)";
+        }
+    }
+
+    public void CreateBonusProgressionUI() {
+        foreach (Transform t in bonusListParent) {
+            Destroy(t.gameObject);
+        }
+
+        for (int i = 0; i < (int)BonusType.MaxValue; i++) {
+            Bonus b = Instantiate(bonusPrefab, bonusListParent).GetComponent<Bonus>();
+
+            bool discovered = GameManager.i.progression.usedBonus.Get(i);
+            if (discovered) {
+                b.Init(new BonusInfo {
+                    intArg = 99,
+                    stringArg = "X",
+                    type = (BonusType)i,
+                });
+
+                b.popupAction = () => {};
+                b.popupActionText = "";
+            }
+            else {
+                b.InitUnknown();
+            }
+
+        }
+    }
+
+    public void CreateEventProgressionUI(bool curse) {
+        Transform parent = curse ? curseListParent : blessingListParent;
+        int maxVal = curse ? Event.CURSE_COUNT : Event.BLESSING_COUNT;
+
+        foreach (Transform t in parent) {
+            Destroy(t.gameObject);
+        }
+
+        for (int i = 0; i < maxVal; i++) {
+            Event ev = Instantiate(EventManager.i.eventPrefab, parent).GetComponent<Event>();
+
+            bool discovered;
+            if (curse) {
+                discovered = GameManager.i.progression.usedCurses.Get(i);
+            }
+            else {
+                discovered = GameManager.i.progression.usedBenedictions.Get(i);
+            }
+
+            if (discovered) {
+                Event.EventInfo info;
+                do {
+                    info = curse ? Event.GetRandomCurse() : Event.GetRandomBlessing();
+                } while (info.typeID != i); // HACK: This is one of the words hack I've ever written
+
+                ev.Init(info, curse, () => {});
+            }
+            else {
+                ev.InitUnknown();
+            }
+
+            ev.hideTakeButtonOnPopup = true;
+
+        }
+    }
 }
 
+/// <summary>
+/// Holds all data for a run, is serialized for save file.
+/// See also Progression and Settings for other saved values
+/// </summary>
 [System.Serializable]
 public struct GameInfo {
     [System.Serializable]

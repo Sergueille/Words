@@ -17,13 +17,19 @@ public class DifficultySelector : MonoBehaviour
 
     public int selectedDifficulty = 0;
 
+    private DifficultyUI[] uis;
+
     private void Start()
     {
+        uis = new DifficultyUI[(int)GameMode.MaxValue];
+
         for (int i = 0; i < (int)GameMode.MaxValue; i++)
         {
             DifficultyUI ui = Instantiate(prefab, UIParent).GetComponent<DifficultyUI>();
             ui.title.text = titles[i];
             ui.description.text = descriptions[i];
+
+            uis[i] = ui;
         }
         
         if (GameManager.i.progression.alreadyPlayed) 
@@ -44,6 +50,16 @@ public class DifficultySelector : MonoBehaviour
     public void PrepareUI() 
     {
         SelectDifficulty((GameMode)selectedDifficulty, true);
+
+        for (int i = 0; i < (int)GameMode.MaxValue; i++) {
+            int bestLevel = GameManager.i.progression.bestLevels.Get(i);
+
+            uis[i].neverPlayedLabel.SetActive(bestLevel == 0 && i != 0);
+            uis[i].scoreText.gameObject.SetActive(bestLevel > 0 && i != 0);
+            uis[i].scoreText.text = bestLevel.ToString();
+            uis[i].scoreLabel.SetActive(bestLevel > 0 && i != 0);
+            uis[i].completedLabel.SetActive(bestLevel >= GameManager.i.thousandLevel && i != 0);
+        }
     }
 
     public void SelectNext()

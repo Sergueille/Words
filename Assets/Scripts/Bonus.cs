@@ -14,6 +14,8 @@ public class Bonus : MonoBehaviour, System.ICloneable
     [SerializeField] private Transform scoreTextUp;
     [SerializeField] private Transform scoreTextDown;
 
+    public bool unknown;
+
     public System.Action popupAction;
     public string popupActionText;
 
@@ -22,7 +24,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
     public void Init(BonusInfo info)
     {
         this.info = info;
+        unknown = false;
         nameText.text = GetName();
+    }
+
+    public void InitUnknown()
+    {
+        unknown = true;
+        nameText.text = "??";
     }
 
     private void Update()
@@ -273,6 +282,89 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     };
                 }
             },
+            new BonusSpawner {
+                weight = 0.8f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.LastMinute,
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'M', 'W' });
+
+                    return new BonusInfo {
+                        type = BonusType.Absorbent,
+                        stringArg = letter.ToString(),
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.Gap,
+                    };
+                }
+            },
+        });
+
+        return bonusGetter();
+    }
+
+    
+    public static BonusInfo GetSuperBonus() 
+    {
+        System.Func<BonusInfo> bonusGetter = Util.GetRandomWithSpawners(new BonusSpawner[] {
+            
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    string pair = Util.GetRandomElement(new string[] {
+                        "ER", "IN"
+                    });
+
+                    return new BonusInfo {
+                        type = BonusType.TwoLetters,
+                        stringArg = pair,
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'S', 'T', 'E', 'A' });
+
+                    return new BonusInfo {
+                        type = BonusType.Charged,
+                        stringArg = letter.ToString(),
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 0.8f,
+                data = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'S', 'T', 'E', 'A' });
+
+                    return new BonusInfo {
+                        type = BonusType.Emergency,
+                        stringArg = letter.ToString(),
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 1.0f,
+                data = () => {
+                    char letter = Util.GetRandomElement(new char[] { 'S', 'T', 'E', 'A' });
+
+                    return new BonusInfo {
+                        type = BonusType.Everywhere,
+                        stringArg = letter.ToString(),
+                    };
+                }
+            },
         });
 
         return bonusGetter();
@@ -323,20 +415,20 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.RelativeNumbers)
         {
-            int improvementCount = 0;
+            int score = 0;
 
             foreach (char c in word) {
                 Letter l = GameManager.i.GetLetterFromChar(c);
 
                 if (l.Level <= 0) {
-                    improvementCount++;
+                    score += -10 * (l.Level - 1);
                     l.Level++;
                 }
             }
 
             return new BonusAction {
-                isAffected = improvementCount > 0,
-                score = improvementCount * 25,
+                isAffected = score != 0,
+                score = score,
             };
         }
         else if (info.type == BonusType.Concentrate)
@@ -835,7 +927,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 score = 0,
             };
         }
-        
         else if (info.type == BonusType.Sacrifice)
         {
             GameManager.i.GetLetterFromChar(word[0]).effect = Letter.Effect.Doomed;
@@ -843,6 +934,59 @@ public class Bonus : MonoBehaviour, System.ICloneable
             return new BonusAction {
                 isAffected = true,
                 score = 40,
+            };
+        }
+        else if (info.type == BonusType.LastMinute)
+        {
+            bool affected = GameManager.i.gi.levelWords == GameManager.i.wordsPerLevel - 1;
+
+            int score = 0;
+
+            if (affected) {
+                foreach (char c in word)
+                {
+                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
+                }
+            }
+
+            score /= 2;
+
+            return new BonusAction {
+                isAffected = affected,
+                score = score,
+            };
+        }
+        else if (info.type == BonusType.Absorbent)
+        {
+            bool affected = false;
+            for (int i = 0; i < word.Length; i++) {
+                if (word[i] == info.stringArg[0]) {
+                    if (i > 0) GameManager.i.GetLetterFromChar(word[i - 1]).Level -= 1;
+                    if (i < word.Length - 1) GameManager.i.GetLetterFromChar(word[i + 1]).Level -= 1;
+
+                    GameManager.i.GetLetterFromChar(info.stringArg[0]).Level += 3;
+                    affected = true;
+                }
+            }
+
+            return new BonusAction {
+                isAffected = affected,
+                score = 0,
+            };
+        }
+        else if (info.type == BonusType.Gap)
+        {
+            int count = 0;
+            for (int i = 0; i < word.Length - 2; i++) {
+                if (word[i] == word[i + 2]) {
+                    GameManager.i.GetLetterFromChar(word[i + 1]).Level += 2;
+                    count++;
+                }
+            }
+
+            return new BonusAction {
+                isAffected = count > 0,
+                score = count * 10,
             };
         }
         else
@@ -879,7 +1023,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.OOO)
         {
-            return "oOo";
+            return "Super O";
         }
         else if (info.type == BonusType.Palindrome)
         {
@@ -957,6 +1101,18 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return "Sacrifice";
         }
+        else if (info.type == BonusType.LastMinute)
+        {
+            return "Last minute";
+        }
+        else if (info.type == BonusType.Absorbent)
+        {
+            return $"Absorbent {info.stringArg}";
+        }
+        else if (info.type == BonusType.Gap)
+        {
+            return $"Gaps";
+        }
         else
         {
             throw new System.Exception("Missing branch!");
@@ -975,7 +1131,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.RelativeNumbers)
         {
-            return "Improves letters which level is strictly less than 1. Gives 25 points per letter improved.";
+            return "Improves letters which level is strictly less than 1. Gives 10 points per level below one for each letter improved.";
         }
         else if (info.type == BonusType.Concentrate)
         {
@@ -1069,6 +1225,18 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return "Gives 40 points, but the first letter of the word becomes Doomed. Doomed letters will loose one level every time they score.";
         }
+        else if (info.type == BonusType.LastMinute)
+        {
+            return "When submitting the last word of a level, give half the points the word would give alone.";
+        }
+        else if (info.type == BonusType.Absorbent)
+        {
+            return $"Improves each {Util.DecorateArgument(info.stringArg)} by 3 levels, but decreases the level of the letters directly after or before an {Util.DecorateArgument(info.stringArg)}.";
+        }
+        else if (info.type == BonusType.Gap)
+        {
+            return $"If there are two identical letters that are two letters away, improves the letter between them by two levels and give 10 points.";
+        }
         else
         {
             throw new System.Exception("Missing branch!");
@@ -1077,7 +1245,12 @@ public class Bonus : MonoBehaviour, System.ICloneable
 
     public void OnClick()
     {
-        BonusPopup.i.ShowPopup(GetName(), GetDescription(), popupAction, popupActionText);
+        if (unknown) {
+            BonusPopup.i.ShowPopup("???", "You haven't discovered this. Take this bonus once to discover it.", popupAction, popupActionText);
+        }
+        else {
+            BonusPopup.i.ShowPopup(GetName(), GetDescription(), popupAction, popupActionText);
+        }
     }
 
     public BonusAction ScoreWithInterface(string word, bool withInterface)
@@ -1180,6 +1353,10 @@ public enum BonusType {
     Effects,
     LongWord,
     Sacrifice,
+    LastMinute,
+    Absorbent,
+    Gap,
+    MaxValue,
 }
 
 

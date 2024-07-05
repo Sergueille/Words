@@ -58,6 +58,8 @@ public static class SaveManager
 
     public static void SaveProgression()
     {
+        GameManager.i.progression.lastVersion = Application.version;
+
         string txt = JsonUtility.ToJson(GameManager.i.progression, true);
         System.IO.File.WriteAllText(GetPath(PROGRESS_SAVE_NAME), txt);
     }
