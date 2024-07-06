@@ -4,6 +4,7 @@ using TMPro;
 using BonusSpawner = Util.Spawner<System.Func<BonusInfo>>;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using Unity.Collections.LowLevel.Unsafe;
 
 public class Bonus : MonoBehaviour, System.ICloneable
 {
@@ -120,14 +121,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.Initial,
-                    };
-                }
-            },
-            new BonusSpawner {
-                weight = 0.7f,
-                data = () => {
-                    return new BonusInfo {
-                        type = BonusType.MoreVowels,
                     };
                 }
             },
@@ -306,6 +299,22 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.Gap,
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = GameManager.i.gi.gameMode == GameMode.Demanding ? 0.0f : 0.9f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.Change,
+                    };
+                }
+            },
+            new BonusSpawner {
+                weight = 0.9f,
+                data = () => {
+                    return new BonusInfo {
+                        type = BonusType.NoChange,
                     };
                 }
             },
@@ -654,30 +663,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 };
             }
         }
-        else if (info.type == BonusType.MoreVowels)
-        {
-            int vowelCount = Util.CountVowels(word);
-            int consonantCount = Util.CountConsonant(word);
-
-            if (vowelCount > consonantCount)
-            {
-                foreach (char c in word) {
-                    GameManager.i.ImproveLetter(c);
-                }
-
-                return new BonusAction {
-                    isAffected = true,
-                    score = 0
-                };
-            }
-            else
-            {
-                return new BonusAction {
-                    isAffected = false,
-                    score = 0,
-                };
-            }
-        }
         else if (info.type == BonusType.Initial)
         {
             if (word.Length > 0) 
@@ -989,6 +974,35 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 score = count * 10,
             };
         }
+        else if (info.type == BonusType.Change)
+        {
+            bool affected = Word.GetWord(word).timesUsed == 0;
+            
+            int score = 0;
+
+            if (affected) {
+                foreach (char c in word)
+                {
+                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
+                }
+            }
+
+            score /= 2;
+
+            return new BonusAction {
+                isAffected = affected,
+                score = score,
+            };
+        }
+        else if (info.type == BonusType.NoChange)
+        {
+            int timesUsed = Word.GetWord(word).timesUsed;
+
+            return new BonusAction {
+                isAffected = timesUsed > 0,
+                score = timesUsed * 7,
+            };
+        }
         else
         {
             throw new System.Exception("Missing branch!");
@@ -1048,10 +1062,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
         else if (info.type == BonusType.Length)
         {
             return $"{info.intArg} letters";
-        }
-        else if (info.type == BonusType.MoreVowels)
-        {
-            return "More vowels";
         }
         else if (info.type == BonusType.Initial)
         {
@@ -1113,6 +1123,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return $"Gaps";
         }
+        else if (info.type == BonusType.Change)
+        {
+            return $"Change";
+        }
+        else if (info.type == BonusType.NoChange)
+        {
+            return $"No change";
+        }
         else
         {
             throw new System.Exception("Missing branch!");
@@ -1173,10 +1191,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return $"If the word is exactly {info.intArg} letters long, gives half the points of the word (not counting other bonuses).";
         }
-        else if (info.type == BonusType.MoreVowels)
-        {
-            return "If the word has strictly more vowels than consonants, improves every letter of the word.";
-        }
         else if (info.type == BonusType.Initial)
         {
             return "Improves the first letter of the word.";
@@ -1236,6 +1250,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
         else if (info.type == BonusType.Gap)
         {
             return $"If there are two identical letters that are two letters away, improves the letter between them by two levels and give 10 points.";
+        }
+        else if (info.type == BonusType.Change)
+        {
+            return $"If the word was never used before, give half the points the word would give alone.";
+        }
+        else if (info.type == BonusType.NoChange)
+        {
+            return $"Give 7 points per time the word was used before.";
         }
         else
         {
@@ -1335,7 +1357,6 @@ public enum BonusType {
     ShortWord,
     Double,
     Initial,
-    MoreVowels,
     Length,
     Triple,
     FrequentVowel,
@@ -1356,6 +1377,8 @@ public enum BonusType {
     LastMinute,
     Absorbent,
     Gap,
+    Change,
+    NoChange,
     MaxValue,
 }
 

@@ -394,7 +394,7 @@ public class Event : MonoBehaviour
 
     public void OnClick() {
         if (isUnknown) {
-            BonusPopup.i.ShowPopup("???", "You haven't discovered this. Take at least once to discover it.", () => {}, "");
+            BonusPopup.i.ShowPopup("???", "You haven't discovered this. Take it at least once to discover it.", () => {}, "");
         }
         else {
             BonusPopup.i.ShowPopup(info.name, info.description, () => {
