@@ -976,8 +976,9 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Change)
         {
-            bool affected = Word.GetWord(word).timesUsed == 0;
-            
+            bool affected = Word.IsWordAllowed(word) && Word.GetWord(word).timesUsed == 0;
+            Debug.Log(Word.IsWordAllowed(word));
+
             int score = 0;
 
             if (affected) {
@@ -996,7 +997,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.NoChange)
         {
-            int timesUsed = Word.GetWord(word).timesUsed;
+            int timesUsed = Word.IsWordAllowed(word) ? Word.GetWord(word).timesUsed : 0;
 
             return new BonusAction {
                 isAffected = timesUsed > 0,

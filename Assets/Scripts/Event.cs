@@ -124,7 +124,7 @@ public class Event : MonoBehaviour
                 }
             },
             new EventSpawner {
-                weight = 1.0f,
+                weight = 1.5f,
                 data = () => new EventInfo {
                     name = "Tax",
                     description = "The most improved letter level will be multiplied by 0.7 (rounded down).",

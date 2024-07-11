@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,6 +7,7 @@ public class DifficultySelector : MonoBehaviour
 {
     public GameObject prefab;
     public RectTransform UIParent;
+    public TextMeshProUGUI overwriteWarningText;
     public string[] titles;
     public string[] descriptions;
 
@@ -60,6 +62,8 @@ public class DifficultySelector : MonoBehaviour
             uis[i].scoreLabel.SetActive(bestLevel > 0 && i != 0);
             uis[i].completedLabel.SetActive(bestLevel >= GameManager.i.thousandLevel && i != 0);
         }
+
+        overwriteWarningText.gameObject.SetActive(GameManager.i.progression.startedRun);
     }
 
     public void SelectNext()

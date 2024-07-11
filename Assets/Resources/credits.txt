@@ -1,0 +1,8 @@
+
+Font: 
+Cascadia, by Microsoft, under SIL open font license
+(https://github.com/microsoft/cascadia-code)
+
+Word database:
+dwyl on GitHub, under unlicense
+(https://github.com/dwyl/english-words)

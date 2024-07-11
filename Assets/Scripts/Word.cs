@@ -4,6 +4,7 @@ using UnityEngine;
 public static class Word 
 {
     public static Dictionary<string, GameWord> words;
+    public static GameWord[] wordArray;
 
     public static void Init() 
     {
@@ -12,13 +13,20 @@ public static class Word
         string fileText = ((TextAsset)Resources.Load("words")).text;
         string[] lines = fileText.Split('\n');
 
-        foreach (string line in lines)
+        wordArray = new GameWord[lines.Length];
+
+        for (int i = 0; i < lines.Length; i++)
         {
-            string trimmed = line.Trim();
-            words.Add(trimmed, new GameWord {
+            string trimmed = lines[i].Trim();
+            GameWord w = new GameWord {
                 word = trimmed,
                 timesUsed = 0,
-            });
+                ID = i,
+            };
+
+            words.Add(trimmed, w);
+
+            wordArray[i] = w;
         }
     }
 
@@ -129,4 +137,5 @@ public class GameWord
 {
     public string word;
     public int timesUsed;
+    public int ID;
 }

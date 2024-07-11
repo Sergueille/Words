@@ -109,7 +109,20 @@ public class SettingsManager : MonoBehaviour
         string txt = JsonUtility.ToJson(settings, true);
         System.IO.File.WriteAllText(SaveManager.GetPath(SETTINGS_FILE_NAME), txt);
         
+        // Reload keyboard
         Keyboard.i.Init();
+
+        // Change resolution
+        Resolution nativeResolution = Screen.resolutions[0];
+        float multiplier = settings.resolution switch {
+            Settings.Resolution.Native => 1.0f,
+            Settings.Resolution.ThreeQuarters => 0.75f,
+            Settings.Resolution.Half => 0.5f,
+            _ => throw new Exception(),
+        };
+
+        Screen.SetResolution(Mathf.FloorToInt(nativeResolution.width * multiplier), Mathf.FloorToInt(nativeResolution.height * multiplier), true);
+
         InstantiateSettingsUI();
     }
     
@@ -125,6 +138,15 @@ public class SettingsManager : MonoBehaviour
 
         [DisplayName("Keyboard layout")]
         public KeyboardLayout keyboardLayout;
+
+        public enum Resolution {
+            [DisplayName("Native (100%)")] Native,
+            [DisplayName("75%")] ThreeQuarters,
+            [DisplayName("50%")] Half,
+        }
+
+        [DisplayName("Screen resolution")]
+        public Resolution resolution;
     }
 }
 

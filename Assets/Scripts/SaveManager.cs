@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 
 public static class SaveManager
@@ -20,6 +21,14 @@ public static class SaveManager
             GameManager.i.gi.bonuses[i] = GameManager.i.bonuses[i].info;
         }
 
+        StringBuilder b = new StringBuilder(Word.words.Count * 3);
+        for (int i = 0; i < Word.words.Count; i++) {
+            Util.AppendIntIntoStringBuilder(b, Word.wordArray[i].timesUsed);
+            b.Append(';');
+        }
+
+        GameManager.i.gi.wordUseCounts = b.ToString();
+
         string txt = JsonUtility.ToJson(GameManager.i.gi, true);
         System.IO.File.WriteAllText(GetPath(RUN_SAVE_NAME), txt);
     }
@@ -33,6 +42,18 @@ public static class SaveManager
         PanelsManager.i.SelectPanel(GameManager.i.gi.currentPanelName, false);
         GameManager.i.CreateBonusUIFromGameInfo();
         GameManager.i.SetBlessingPoints(GameManager.i.gi.blessingPoints, true);
+
+        int acc = 0;
+        int i = 0;
+        for (int pos = 0; pos < GameManager.i.gi.wordUseCounts.Length; pos++) {
+            if (GameManager.i.gi.wordUseCounts[pos] == ';') {
+                Word.wordArray[i].timesUsed = acc;
+                i++;
+            }
+            else {
+                acc = 10 * acc + (GameManager.i.gi.wordUseCounts[pos] - '0');
+            }
+        }
 
         switch (GameManager.i.gi.state) {
             case GameInfo.State.Ingame:

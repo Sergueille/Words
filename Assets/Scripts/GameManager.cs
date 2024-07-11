@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     public int wordsPerLevel = 3;
     public int blessingPointsLimit = 6;
     public string rareLetters = "JQXZ";
+    public int maxInputLength = 17;
     
     public float intenseScoreMultiplier = 1.5f;
     public float scoreExpMultiplier = 20.0f;
@@ -51,6 +52,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI totalScoreText;
     public TextMeshProUGUI targetScoreText;
     public TextMeshProUGUI constraintText;
+    public TextMeshProUGUI levelText;
     public DotCounter wordsCounter;
     public Transform bonusParent;
     public GameObject bonusPrefab;
@@ -89,7 +91,7 @@ public class GameManager : MonoBehaviour
     public ParticleSystem confettis;
 
     private bool shownThousandScreen = false;
-    
+
     private void Awake()
     {
         i = this;
@@ -210,6 +212,8 @@ public class GameManager : MonoBehaviour
 
     public void LevelCompleted()
     {
+        UpdateLevelText();
+
         // Update best level in progress
         if (gi.currentLevel > progression.bestLevels.Get((int)gi.gameMode))
             progression.bestLevels.Set((int)gi.gameMode, gi.currentLevel);
@@ -258,6 +262,7 @@ public class GameManager : MonoBehaviour
         ColorManager.i.SetTheme("default", false);
         wordsCounter.SetValue(gi.levelWords + 1);
         ClearInput(true);
+        UpdateLevelText();
         ChangeConstraint();
         UpdateTotalScore(gi.totalScore, true);
         UpdateCurrentScoreText(0);
@@ -508,6 +513,10 @@ public class GameManager : MonoBehaviour
         lastCurrentScore = currentScore;
     }
 
+    private void UpdateLevelText() {
+        levelText.text = $"{gi.currentLevel}/{thousandLevel}"; // TODO!
+    }
+
     private void UpdateTotalScore(int newValue, bool immediate) 
     {
         gi.totalScore = newValue;
@@ -547,6 +556,10 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void InputLetter(char c) 
     {
+        if (inputWord.Length >= maxInputLength) {
+            return;
+        }
+
         InputLetter newLetter = Instantiate(inputLetterPrefab, inputParent).GetComponent<InputLetter>();
         newLetter.letter = c;
         newLetter.TriggerCreationAnimation();
@@ -900,6 +913,8 @@ public class GameManager : MonoBehaviour
         
         UpdateProgressUI();
 
+        BonusPopup.i.HidePopup();
+
         ColorManager.i.SetTheme("menu", false);
 
         PanelsManager.i.CircleTransition(() => {
@@ -1027,6 +1042,9 @@ public struct GameInfo {
     // Not the actual letters! Just a copy for the save! See GameManager.letters
     [SerializeField]
     public Letter[] letters;
+
+    // Counts separated by semicolons
+    public string wordUseCounts;
 
     public Random.State randomState;
     
