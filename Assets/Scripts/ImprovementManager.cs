@@ -22,8 +22,10 @@ public class ImprovementManager : MonoBehaviour
     {
         StartCoroutine(Coroutine());
 
-        IEnumerator<WaitUntil> Coroutine() 
+        IEnumerator<object> Coroutine() 
         {
+            GameManager.i.UpdateLevelText(true);
+
             foreach (Transform child in lettersParent)
             {
                 Destroy(child.gameObject);
@@ -33,6 +35,7 @@ public class ImprovementManager : MonoBehaviour
             ColorManager.i.SetTheme("improvement", false);
             SaveManager.SaveRun(GameInfo.State.Improvement);
 
+            bool finished = false;
             lettersToImprove = new List<char>();
             for (int i = 0; i < choiceCount; i++) 
             {
@@ -40,6 +43,8 @@ public class ImprovementManager : MonoBehaviour
                 Key key = Instantiate(letterPrefab, lettersParent).GetComponent<Key>();
                 key.letter = c;
                 key.onPress = c => {
+                    if (finished) return;
+
                     key.Select(!key.isSelected);
 
                     if (key.isSelected) {
@@ -53,6 +58,9 @@ public class ImprovementManager : MonoBehaviour
             }
 
             yield return new WaitUntil(() => lettersToImprove.Count >= improvementsCount);
+            finished = true;
+
+            yield return new WaitForSeconds(GameManager.i.smallDelay);
 
             foreach (char c in lettersToImprove)
             {

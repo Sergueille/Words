@@ -2,31 +2,39 @@ using UnityEngine;
 using TMPro;
 
 using BonusSpawner = Util.Spawner<System.Func<BonusInfo>>;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using Unity.Collections.LowLevel.Unsafe;
 
 public class Bonus : MonoBehaviour, System.ICloneable
 {
     public BonusInfo info;
 
     [SerializeField] private TextMeshProUGUI nameText;
-    [SerializeField] private TextMeshProUGUI scoreText;
+    public TextMeshProUGUI scoreText;
     [SerializeField] private Transform scoreTextUp;
     [SerializeField] private Transform scoreTextDown;
+
+    [SerializeField] private Transform moveableTransform;
+
+    [SerializeField] private MovementDescr xMove;
+    [SerializeField] private MovementDescr yMove;
 
     public bool unknown;
 
     public System.Action popupAction;
     public string popupActionText;
 
-    private bool isOscillating = false; 
+    private bool isOscillating = false;
+
+    private Vector2 lastPos;
+    private Vector2 previousPos;
 
     public void Init(BonusInfo info)
     {
         this.info = info;
         unknown = false;
         nameText.text = GetName();
+        lastPos = transform.position;
+        previousPos = transform.position;
+        moveableTransform.localPosition = Vector2.zero;
     }
 
     public void InitUnknown()
@@ -45,6 +53,9 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             transform.eulerAngles = new Vector3(0, 0, 0);
         }
+
+        previousPos = lastPos;
+        lastPos = transform.position;
     }
 
     public static BonusInfo GetRandomBonus() 
@@ -393,7 +404,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = affected,
+                improvedLetters = affected,
                 score = 0,
             };
         }
@@ -418,7 +429,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = improvementCount > 0,
+                improvedLetters = improvementCount > 0,
                 score = 0,
             };
         }
@@ -436,7 +447,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = score != 0,
+                improvedLetters = score != 0,
                 score = score,
             };
         }
@@ -466,7 +477,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             GameManager.i.GetLetterFromChar(lowest).Level -= 1;
 
             return new BonusAction {
-                isAffected = true,
+                improvedLetters = true,
                 score = 0,
             };
         }
@@ -481,7 +492,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             GameManager.i.ImproveLetter(info.stringArg[0]);
 
             return new BonusAction {
-                isAffected = true,
+                improvedLetters = true,
                 score = found ? -500 : 00,
             };
         }
@@ -497,7 +508,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = true,
+                improvedLetters = improved,
                 score = improved ? 0 : -500,
             };
         }
@@ -515,7 +526,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = improved,
+                improvedLetters = improved,
                 score = 0,
             };
         }
@@ -526,14 +537,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 GameManager.i.ImproveLetter(word[0]);
 
                 return new BonusAction {
-                    isAffected = true,
+                    improvedLetters = true,
                     score = 15,
                 };
             }
             else
             {
                 return new BonusAction {
-                    isAffected = false,
+                    improvedLetters = false,
                     score = 0,
                 };
             }
@@ -555,7 +566,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             GameManager.i.ImproveLetter(word[leastId]);
 
             return new BonusAction {
-                isAffected = true,
+                improvedLetters = true,
                 score = 0,
             };
         }
@@ -574,7 +585,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                         GameManager.i.ImproveLetter(info.stringArg[0]);
 
                         return new BonusAction {
-                            isAffected = true,
+                            improvedLetters = true,
                             score = 30,
                         };
                     }
@@ -582,7 +593,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = false,
+                improvedLetters = false,
                 score = 0,
             };
         }
@@ -605,7 +616,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = best > 0,
+                improvedLetters = false,
                 score = 6 * best,
             };
         }
@@ -634,7 +645,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = improved,
+                improvedLetters = improved,
                 score = 0,
             };
         }
@@ -651,14 +662,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 score /= 2;
 
                 return new BonusAction {
-                    isAffected = true,
+                    improvedLetters = false,
                     score = score,
                 };
             }
             else
             {
                 return new BonusAction {
-                    isAffected = false,
+                    improvedLetters = false,
                     score = 0,
                 };
             }
@@ -669,14 +680,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
             {
                 GameManager.i.ImproveLetter(word[0]);
                 return new BonusAction {
-                    isAffected = true,
+                    improvedLetters = true,
                     score = 0,
                 };
             }
             else
             {
                 return new BonusAction {
-                    isAffected = false,
+                    improvedLetters = false,
                     score = 0,
                 };
             }
@@ -698,7 +709,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }    
         
             return new BonusAction {
-                isAffected = improved,
+                improvedLetters = improved,
                 score = 0,
             };
         }
@@ -712,14 +723,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 }
 
                 return new BonusAction {
-                    isAffected = true,
+                    improvedLetters = true,
                     score = 0,
                 };
             }
             else
             {
                 return new BonusAction {
-                    isAffected = false,
+                    improvedLetters = false,
                     score = 0,
                 };
             }
@@ -742,7 +753,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }    
         
             return new BonusAction {
-                isAffected = improved,
+                improvedLetters = improved,
                 score = improved ? 10 : 0,
             };
         }
@@ -763,7 +774,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = true,
+                improvedLetters = false,
                 score = 6 * worstLetter.GetScore(false),
             };
         }
@@ -779,7 +790,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = true,
+                improvedLetters = false,
                 score = bestLevel,
             };
         }
@@ -800,7 +811,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                     if (i == randCons) {
                         GameManager.i.ImproveLetter(c);
                         return new BonusAction {
-                            isAffected = true,
+                            improvedLetters = true,
                             score = 0,
                         };
                     }
@@ -810,7 +821,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = false,
+                improvedLetters = false,
                 score = 0,
             };
         }
@@ -843,14 +854,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 }
 
                 return new BonusAction {
-                    isAffected = true,
+                    improvedLetters = true,
                     score = score,
                 };
             }
             else 
             {                
                 return new BonusAction {
-                    isAffected = false,
+                    improvedLetters = false,
                     score = 0,
                 };
             }
@@ -864,7 +875,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 if (used[c - 'A']) 
                 {
                     return new BonusAction {
-                        isAffected = false,
+                        improvedLetters = false,
                         score = 0,
                     };
                 }
@@ -876,14 +887,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
 
             foreach (char c in word)
             {
-                if (Util.IsVowel(c))
+                if (Util.IsConsonant(c))
                 {
                     GameManager.i.ImproveLetter(c);
                 }
             }
 
             return new BonusAction {
-                isAffected = true,
+                improvedLetters = true,
                 score = 0,
             };
         }
@@ -901,14 +912,14 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = affected,
+                improvedLetters = affected,
                 score = 0,
             };
         }
         else if (info.type == BonusType.LongWord)
         {
             return new BonusAction {
-                isAffected = word.Length > 12,
+                improvedLetters = word.Length > 12,
                 score = 0,
             };
         }
@@ -917,7 +928,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             GameManager.i.GetLetterFromChar(word[0]).effect = Letter.Effect.Doomed;
 
             return new BonusAction {
-                isAffected = true,
+                improvedLetters = true,
                 score = 40,
             };
         }
@@ -937,7 +948,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             score /= 2;
 
             return new BonusAction {
-                isAffected = affected,
+                improvedLetters = false,
                 score = score,
             };
         }
@@ -955,7 +966,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = affected,
+                improvedLetters = affected,
                 score = 0,
             };
         }
@@ -970,14 +981,13 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             return new BonusAction {
-                isAffected = count > 0,
-                score = count * 10,
+                improvedLetters = count > 0,
+                score = 0,
             };
         }
         else if (info.type == BonusType.Change)
         {
-            bool affected = Word.IsWordAllowed(word) && Word.GetWord(word).timesUsed == 0;
-            Debug.Log(Word.IsWordAllowed(word));
+            bool affected = Word.IsWordAllowed(word.ToLower()) && Word.GetWord(word.ToLower()).timesUsed == 0;
 
             int score = 0;
 
@@ -991,17 +1001,17 @@ public class Bonus : MonoBehaviour, System.ICloneable
             score /= 2;
 
             return new BonusAction {
-                isAffected = affected,
+                improvedLetters = false,
                 score = score,
             };
         }
         else if (info.type == BonusType.NoChange)
         {
-            int timesUsed = Word.IsWordAllowed(word) ? Word.GetWord(word).timesUsed : 0;
+            int timesUsed = Word.IsWordAllowed(word.ToLower()) ? Word.GetWord(word.ToLower()).timesUsed : 0;
 
             return new BonusAction {
-                isAffected = timesUsed > 0,
-                score = timesUsed * 7,
+                improvedLetters = false,
+                score = timesUsed * 10,
             };
         }
         else
@@ -1226,7 +1236,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Diversity)
         {
-            return "If all the letters of the word are different, improves all the vowels of the word.";
+            return "If all the letters of the word are different, improves all the consonants of the word.";
         }
         else if (info.type == BonusType.Effects)
         {
@@ -1250,7 +1260,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Gap)
         {
-            return $"If there are two identical letters that are two letters away, improves the letter between them by two levels and give 10 points.";
+            return $"If there are two identical letters that are two letters away, improves the letter between them by two levels.";
         }
         else if (info.type == BonusType.Change)
         {
@@ -1258,7 +1268,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.NoChange)
         {
-            return $"Give 7 points per time the word was used before.";
+            return $"Give 10 points per time the word was used before.";
         }
         else
         {
@@ -1276,13 +1286,13 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
     }
 
-    public BonusAction ScoreWithInterface(string word, bool withInterface)
+    public BonusAction ScoreWithoutInterface(string word) 
     {
         BonusAction res;
         if (word.Length == 0) // Do not evaluate function on empty word (it may cause errors)
         {
             res = new BonusAction {
-                isAffected = false, score = 0,
+                improvedLetters = false, score = 0,
             };
         }
         else
@@ -1290,9 +1300,16 @@ public class Bonus : MonoBehaviour, System.ICloneable
             res = OnScore(word.ToUpper());
         }
 
-        isOscillating = res.isAffected && withInterface;
+        return res;
+    }
 
-        if (withInterface && res.isAffected && res.score > 0)
+    public BonusAction ScoreWithInterface(string word, bool withInterface)
+    {
+        BonusAction res = ScoreWithoutInterface(word);
+
+        isOscillating = res.improvedLetters && withInterface;
+
+        if (withInterface && res.improvedLetters && res.score > 0)
         {
             scoreText.text = $"+{res.score}";
 
@@ -1321,6 +1338,22 @@ public class Bonus : MonoBehaviour, System.ICloneable
     public object Clone()
     {
         return MemberwiseClone();
+    }
+
+    public void AnimateFromLastPosition() {
+        moveableTransform.position = previousPos;
+
+        xMove.DoWithBounds(x => {
+            moveableTransform.localPosition = new Vector3(
+                x, moveableTransform.localPosition.y, 0
+            );
+        }, moveableTransform.localPosition.x, 0);
+
+        yMove.DoWithBounds(y => {
+            moveableTransform.localPosition = new Vector3(
+                moveableTransform.localPosition.x, y, 0
+            );
+        }, moveableTransform.localPosition.y, 0);
     }
 }
 
@@ -1384,9 +1417,8 @@ public enum BonusType {
 }
 
 
-[StructLayout(LayoutKind.Sequential)]
 public struct BonusAction
 {
-    public bool isAffected;
+    public bool improvedLetters;
     public int score;
 }

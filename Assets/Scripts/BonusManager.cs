@@ -23,6 +23,8 @@ public class BonusManager : MonoBehaviour
 
         IEnumerator<WaitUntil> Coroutine() 
         {
+            GameManager.i.UpdateLevelText(true);
+
             foreach (Transform child in bonusParent)
             {
                 Destroy(child.gameObject);

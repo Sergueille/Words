@@ -14,12 +14,12 @@ public class LoadingManager : MonoBehaviour
             "You can use Charged bonuses to remove negative effects from letters. Make sure you don't accidentally remove good effects.",
             "Remember you can remove bonuses at any time.",
             "Making words with lower scores can allow you to write 3 words per level, so letters can be improved more.",
-            "The game will never propose a bonus you already have. However, you can copy them with benediction.",
-            "Taking Average is generally a bad idea. Because it's rounded down.",
-            "Don't be afraid of using the same word multiple times.",
+            "The game will never propose a bonus you already have. However, you can copy them with benedictions.",
+            "Taking the Average curse is generally a bad idea. Because it's rounded down.",
+            "Using always the same word is an inelegant but efficient strategy.",
             "Use bonuses that make points at the end of your run, prefer bonuses that improve letters at the beginning.",
             "You can change the keyboard layout in the settings.",
-            $"Your save files are located in {Application.persistentDataPath}.",
+            $"Your can cheat by editing your save files, located in {Application.persistentDataPath}.",
         };
 
         tipText.text = tips[Random.Range(0, tips.Length)];

@@ -112,13 +112,19 @@ public static class Util
 
     public static void AppendIntIntoStringBuilder(StringBuilder b, int i) {
         int exp = 0;
-        while ((16 << (exp * 4)) <= i) exp++;
+        while ((16 << (exp * 4)) <= i) {
+            exp++;
+        }
 
         for (int j = exp; j >= 0; j--) {
             int digit = (i >> (j * 4)) & 15;
             b.Append((char)(digit + '0'));
         }
     } 
+
+    public static void DoNextFrame(GameObject owner, System.Action fn) {
+        LeanTween.value(owner, 0, 0, 0.01f).setOnComplete(fn);
+    }
 
     public static string GetPercentage(float val) {
         return Mathf.FloorToInt(val * 100).ToString();

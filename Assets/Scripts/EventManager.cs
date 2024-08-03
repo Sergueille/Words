@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -11,6 +12,8 @@ public class EventManager : MonoBehaviour
     public GameObject eventPrefab;
     public Transform eventParent;
     public TextMeshProUGUI titleText;
+    
+    private int[] previousTypeIds;
 
     private void Awake()
     {
@@ -22,6 +25,8 @@ public class EventManager : MonoBehaviour
         StartCoroutine(Coroutine());
 
         IEnumerator<object> Coroutine() {
+            GameManager.i.UpdateLevelText(true);
+
             foreach (Transform child in eventParent)
             {
                 Destroy(child.gameObject);
@@ -42,9 +47,23 @@ public class EventManager : MonoBehaviour
 
             bool finished = false;
 
+            previousTypeIds = new int[choiceCount]; // Array to prevent getting twice the same event
             for (int i = 0; i < choiceCount; i++) {
-                Event ev = Instantiate(eventPrefab, eventParent).GetComponent<Event>();
+                previousTypeIds[i] = -1;
+            }
+
+            for (int i = 0; i < choiceCount; i++) {
                 Event.EventInfo info = curse ? Event.GetRandomCurse() : Event.GetRandomBlessing();
+
+                if (previousTypeIds.Contains(info.typeID)) { // If already selected one, retry
+                    i--;
+                    continue;
+                }
+
+                Event ev = Instantiate(eventPrefab, eventParent).GetComponent<Event>();
+
+                previousTypeIds[i] = info.typeID;
+
                 ev.Init(info, curse, () => {
                     finished = true;
                 });

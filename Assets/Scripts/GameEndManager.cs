@@ -25,6 +25,8 @@ public class GameEndManager : MonoBehaviour
     }
     
     public void Do() {
+        bestWordText.text = "Searching for the best word...";
+
         StartCoroutine(GameManager.i.FindBestWord(
             ColorManager.i.ColorChangedThisFrame,
             (word, score) => {

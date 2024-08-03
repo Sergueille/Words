@@ -49,7 +49,7 @@ public class Letter : System.ICloneable, System.IComparable
     public enum Effect {
         None, 
         Poisonous, Doomed, Locked,
-        Doubled, Polymorphic,
+        Doubled, Tripled, Polymorphic,
         Electric, Burning,
     }
 
@@ -76,6 +76,9 @@ public class Letter : System.ICloneable, System.IComparable
     public int GetScore(bool played) {
         if (effect == Effect.Doubled) {
             return 2 * Level;
+        }
+        else if (effect == Effect.Tripled) {
+            return 3 * Level;
         }
         else if (effect == Effect.Poisonous) {
             if (played) {

@@ -23,8 +23,12 @@ public static class SaveManager
 
         StringBuilder b = new StringBuilder(Word.words.Count * 3);
         for (int i = 0; i < Word.words.Count; i++) {
-            Util.AppendIntIntoStringBuilder(b, Word.wordArray[i].timesUsed);
-            b.Append(';');
+            if (Word.wordArray[i].timesUsed != 0) {
+                Util.AppendIntIntoStringBuilder(b,i);
+                b.Append(':');
+                Util.AppendIntIntoStringBuilder(b, Word.wordArray[i].timesUsed);
+                b.Append(';');
+            }
         }
 
         GameManager.i.gi.wordUseCounts = b.ToString();
@@ -44,11 +48,15 @@ public static class SaveManager
         GameManager.i.SetBlessingPoints(GameManager.i.gi.blessingPoints, true);
 
         int acc = 0;
-        int i = 0;
+        int targetWord = 0;
         for (int pos = 0; pos < GameManager.i.gi.wordUseCounts.Length; pos++) {
             if (GameManager.i.gi.wordUseCounts[pos] == ';') {
-                Word.wordArray[i].timesUsed = acc;
-                i++;
+                Word.wordArray[targetWord].timesUsed = acc;
+                acc = 0;
+            }
+            else if (GameManager.i.gi.wordUseCounts[pos] == ':') {
+                targetWord = acc;
+                acc = 0;
             }
             else {
                 acc = 10 * acc + (GameManager.i.gi.wordUseCounts[pos] - '0');

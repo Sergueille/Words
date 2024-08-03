@@ -192,7 +192,7 @@ public class Event : MonoBehaviour
             new EventSpawner {
                 weight = 1.5f,
                 data = () => {
-                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T', 'I', 'A', 'R' });
+                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T', 'I', 'A' });
                     return new EventInfo {
                         name = $"Doomed {letter}",
                         description = $"Gives the Doomed effect to {Util.DecorateArgument(letter)}. Each time the letter scores, it looses a level",
@@ -204,9 +204,9 @@ public class Event : MonoBehaviour
                 }
             },
             new EventSpawner {
-                weight = 1.5f,
+                weight = 1.0f,
                 data = () => {
-                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T', 'R' });
+                    char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T' });
                     return new EventInfo {
                         name = $"Locked {letter}",
                         description = $"Gives the Locked effect to {Util.DecorateArgument(letter)}. The level of the letter won't change anymore.",
@@ -238,6 +238,19 @@ public class Event : MonoBehaviour
                     };
                 }
             },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => {
+                    return new EventInfo {
+                        name = $"Lock",
+                        description = $"Gives the Locked effect to the most improved letter. The level of the letter won't change anymore.",
+                        typeID = 12,
+                        onCall = () => {
+                            GameManager.i.GetNthMostImprovedLetter(2).effect = Letter.Effect.Locked;
+                        }
+                    };
+                }
+            },
         })();
     }
 
@@ -247,10 +260,10 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Doubled letter",
-                    description = "Gives the Doubled effect on the third most improved letter. The letter will score twice as many points.",
+                    description = "Gives the Doubled effect on the second most improved letter. The letter will score twice as many points.",
                     typeID = 0,
                     onCall = () => {
-                        GameManager.i.GetNthMostImprovedLetter(3).effect = Letter.Effect.Doubled; 
+                        GameManager.i.GetNthMostImprovedLetter(2).effect = Letter.Effect.Doubled; 
                     }
                 }
             },
@@ -320,10 +333,10 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Burn",
-                    description = "Gives the Burning effect to the fourth most improved letter. The letter will gain a level when used, but will loose 1 if not used in a word.",
+                    description = "Gives the Burning effect to the second most improved letter. The letter will gain a level when used, but will loose 1 if not used in a word.",
                     typeID = 5,
                     onCall = () => {
-                        GameManager.i.GetNthMostImprovedLetter(4).effect = Letter.Effect.Burning; 
+                        GameManager.i.GetNthMostImprovedLetter(2).effect = Letter.Effect.Burning; 
                     }
                 }
             },
@@ -386,6 +399,17 @@ public class Event : MonoBehaviour
                         Bonus b = Instantiate(GameManager.i.bonusPrefab).GetComponent<Bonus>();
                         b.Init(Bonus.GetSuperBonus());
                         GameManager.i.AddBonus(b);
+                    }
+                }
+            },
+            new EventSpawner {
+                weight = 1.0f,
+                data = () => new EventInfo {
+                    name = "Tripled letter",
+                    description = "Gives the Tripled effect on the third most improved letter. The letter will score thrice as many points.",
+                    typeID = 11,
+                    onCall = () => {
+                        GameManager.i.GetNthMostImprovedLetter(3).effect = Letter.Effect.Tripled; 
                     }
                 }
             },
