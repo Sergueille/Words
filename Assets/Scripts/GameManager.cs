@@ -27,6 +27,8 @@ public class GameManager : MonoBehaviour
     public float scoreExpMultiplier = 20.0f;
     public float scoreExpSpeed = 0.15f;
     public int thousandLevel = 23;
+    public int fastTime = 40;
+    public int gameOverTime = 60;
 
     public RectTransform canvasTransform;
 
@@ -60,6 +62,10 @@ public class GameManager : MonoBehaviour
     public DotCounter blessingCounter;
     public Button continueBtn;
     public Transform valueSelectParent;
+    public GameObject timer;
+    public Material timerMaterial;
+    public TextMeshProUGUI timerText;
+    public TextMeshProUGUI successScoreText;
 
     public TextMeshProUGUI[] progressTexts;
     public TextMeshProUGUI[] completionProgressTexts;
@@ -91,6 +97,9 @@ public class GameManager : MonoBehaviour
     public ParticleSystem confettis;
 
     private bool shownThousandScreen = false;
+
+    private int lastSecond;
+    private bool isPlaying; // Is player is a run (not in main menu)?
 
     private void Awake()
     {
@@ -140,6 +149,7 @@ public class GameManager : MonoBehaviour
         PanelsManager.i.CircleTransition(() => {
             PanelsManager.i.SelectPanel("Main", false);
             PanelsManager.i.ToggleGameUI(true);
+            isPlaying = true;
             bonusFullPanel.SetActive(false);
 
             ClearInput(true);
@@ -211,6 +221,7 @@ public class GameManager : MonoBehaviour
             SaveManager.LoadRun();
             Keyboard.i.UpdateAllKeys(false);
             PanelsManager.i.ToggleGameUI(true);
+            isPlaying = true;
         });
     }
 
@@ -228,6 +239,11 @@ public class GameManager : MonoBehaviour
         // Show thousand screen
         if (!shownThousandScreen && gi.currentLevel == thousandLevel) {
             shownThousandScreen = true;
+
+            successScoreText.text = gi.gameMode == GameMode.Intense || gi.gameMode == GameMode.Insane
+                ? (1000 * intenseScoreMultiplier).ToString()
+                : 1000.ToString();
+
             PanelsManager.i.SelectPanel("Success", false);
             ColorManager.i.SetTheme("success", false);
             confettis.Play();
@@ -244,7 +260,7 @@ public class GameManager : MonoBehaviour
         if (gi.currentLevel % 2 == 1) {
             BonusManager.i.Do();
         }
-        else if (gi.currentLevel % 4 == 0 || gi.gameMode == GameMode.Cursed) {
+        else if (gi.currentLevel % 4 == 0) {
             EventManager.i.Do(true, StartNewLevel);
         }
         else {
@@ -257,6 +273,7 @@ public class GameManager : MonoBehaviour
         gi.levelWords = 0;
         UpdateTotalScore(0, true);
         InitLevel();
+        gi.levelTime = 0;
         SaveManager.SaveRun(GameInfo.State.Ingame);
     } 
 
@@ -314,6 +331,32 @@ public class GameManager : MonoBehaviour
         cursorImage.enabled = 
             Time.time < lastCursorChangeTime + cursorBlinkSpeed 
          || Time.time % cursorBlinkSpeed > cursorBlinkSpeed / 2;
+
+        gi.levelTime += Time.deltaTime;
+
+        bool showTimer = isPlaying && (gi.gameMode == GameMode.Fast || gi.gameMode == GameMode.Insane);
+        timer.SetActive(showTimer);
+        if (showTimer) {
+            int remainingSeconds = Mathf.FloorToInt(fastTime - gi.levelTime);
+
+            timerText.text = remainingSeconds.ToString();
+            timerMaterial.SetFloat("_Angle", remainingSeconds * Mathf.PI * 2 / fastTime);
+            timerMaterial.SetColor("_ColorA", ColorManager.i.GetColor(ColorManager.ThemeColor.BackgroundLighter));
+            timerMaterial.SetColor("_ColorB", ColorManager.i.GetColor(ColorManager.ThemeColor.PrimaryDarker));
+            timerMaterial.SetColor("_ColorC", ColorManager.i.GetColor(ColorManager.ThemeColor.Secondary));
+
+            if (remainingSeconds < lastSecond && remainingSeconds < 0) {
+                int randLetter = Random.Range(0, 26);
+                gi.letters[randLetter].Level--;
+                Keyboard.i.UpdateAllKeys(true);
+            }
+
+            if (gi.levelTime > gameOverTime) {
+                GameEndManager.i.Do();
+            }
+
+            lastSecond = remainingSeconds;
+        }
     }
 
 
@@ -354,7 +397,7 @@ public class GameManager : MonoBehaviour
         {
             ShowError("This isn't a word");
         }
-        else if (gi.gameMode == GameMode.Demanding && Word.words[word].timesUsed > 0) 
+        else if ((gi.gameMode == GameMode.Demanding || gi.gameMode == GameMode.Insane) && Word.words[word].timesUsed > 0) 
         {
             ShowError("You already used this word");
         }
@@ -509,8 +552,8 @@ public class GameManager : MonoBehaviour
 
             Util.LeanTweenShake(currentScoreText.gameObject, 15.0f, 0.5f);
             
-            if (currentScore > 0) {
-                currentScoreText.text = $"+{currentScore}";
+            if (currentScore != 0) {
+                currentScoreText.text = Util.ToStringWithPlus(currentScore);
             }
             else {
                 currentScoreText.text = currentScore.ToString();
@@ -700,10 +743,7 @@ public class GameManager : MonoBehaviour
                 a = bonus.ScoreWithInterface(word, showBonusInterface);
             }
 
-            if (a.improvedLetters)
-            {
-                total += a.score;
-            }
+            total += a.score;
         }
 
         // Put the old letters back!
@@ -744,7 +784,7 @@ public class GameManager : MonoBehaviour
     public int GetLevelTargetScore()
     {
         if (gi.currentLevel == thousandLevel) {
-            if (gi.gameMode == GameMode.Intense) {
+            if (gi.gameMode == GameMode.Intense || gi.gameMode == GameMode.Insane) {
                 return 1500;   
             }
             else {
@@ -752,14 +792,25 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        float mult = gi.gameMode == GameMode.Intense ? intenseScoreMultiplier : 1.0f;
+        float mult = gi.gameMode == GameMode.Intense || gi.gameMode == GameMode.Insane ? intenseScoreMultiplier : 1.0f;
         return Mathf.FloorToInt(mult * scoreExpMultiplier * Mathf.Exp(gi.currentLevel * scoreExpSpeed));
     }
 
     public void RemoveBonus(Bonus bonus)
     {
+        for (int i = 0; i < bonuses.Count; i++) {
+            bonuses[i].RecordPreviousPosition();
+        }
+
         bonuses.Remove(bonus);
         Destroy(bonus.gameObject);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(bonusParent.gameObject.GetComponent<RectTransform>());
+
+        Util.DoNextFrame(gameObject, () => {
+            for (int i = 0; i < bonuses.Count; i++) {
+                bonuses[i].AnimateFromLastPosition();
+            }
+        });
     }
 
     public void ShowBonusPopup(bool visible)
@@ -802,6 +853,12 @@ public class GameManager : MonoBehaviour
         else
         {
             bonuses.Add(bonus);
+
+            // Record last bonus positions
+            for (int i = 0; i < bonuses.Count; i++) {
+                bonuses[i].RecordPreviousPosition();
+            }
+
             bonus.transform.SetParent(bonusParent, false);
             Util.LeanTweenShake(bonus.gameObject, 40, 0.5f);
 
@@ -949,12 +1006,13 @@ public class GameManager : MonoBehaviour
         PanelsManager.i.CircleTransition(() => {
             PanelsManager.i.SelectPanel("MainMenu", false);
             PanelsManager.i.ToggleGameUI(false);
+            isPlaying = false;
         });
     }
 
     public int GetMaxBonusCount()
     {
-        if (gi.gameMode == GameMode.Intense)
+        if (gi.gameMode == GameMode.Intense || gi.gameMode == GameMode.Insane)
         {
             return 5;
         }
@@ -1047,6 +1105,12 @@ public class GameManager : MonoBehaviour
 
         }
     }
+
+    public void ResetEverything() {
+        SaveManager.ResetAll();
+        SettingsManager.i.DeleteFile();
+        Application.Quit();
+    }
 }
 
 /// <summary>
@@ -1088,11 +1152,13 @@ public struct GameInfo {
     
     public int blessingPoints;
 
+    public float levelTime;
+
     public string currentPanelName;
 }
 
 [System.Serializable]
 public enum GameMode {
-    Tutorial, Standard, Demanding, Intense, Cursed, MaxValue
+    Tutorial, Standard, Demanding, Intense, Fast, Insane, MaxValue
 }
 

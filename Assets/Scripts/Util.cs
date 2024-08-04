@@ -130,6 +130,15 @@ public static class Util
         return Mathf.FloorToInt(val * 100).ToString();
     }
 
+    public static string ToStringWithPlus(int v) {
+        if (v >= 0) {
+            return $"+{v}";
+        }
+        else {
+            return v.ToString();
+        }
+    }
+
     public struct Spawner<T> {
         public float weight;
         public T data;

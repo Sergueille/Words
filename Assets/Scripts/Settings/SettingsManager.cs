@@ -125,6 +125,11 @@ public class SettingsManager : MonoBehaviour
 
         InstantiateSettingsUI();
     }
+
+    public void DeleteFile() {
+        try { System.IO.File.Delete(SaveManager.GetPath(SETTINGS_FILE_NAME)); } catch {}
+        SetDefaultSettings();
+    }
     
     [System.Serializable]
     public struct Settings {

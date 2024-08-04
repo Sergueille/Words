@@ -24,7 +24,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
 
     private bool isOscillating = false;
 
-    private Vector2 lastPos;
     private Vector2 previousPos;
 
     public void Init(BonusInfo info)
@@ -32,7 +31,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
         this.info = info;
         unknown = false;
         nameText.text = GetName();
-        lastPos = transform.position;
         previousPos = transform.position;
         moveableTransform.localPosition = Vector2.zero;
     }
@@ -53,9 +51,6 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             transform.eulerAngles = new Vector3(0, 0, 0);
         }
-
-        previousPos = lastPos;
-        lastPos = transform.position;
     }
 
     public static BonusInfo GetRandomBonus() 
@@ -314,7 +309,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 }
             },
             new BonusSpawner {
-                weight = GameManager.i.gi.gameMode == GameMode.Demanding ? 0.0f : 0.9f,
+                weight = GameManager.i.gi.gameMode == GameMode.Demanding || GameManager.i.gi.gameMode == GameMode.Insane ? 0.0f : 0.9f,
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.Change,
@@ -904,7 +899,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
 
             foreach (char c in word)
             {
-                if (GameManager.i.GetLetterFromChar(c).effect == Letter.Effect.None)
+                if (GameManager.i.GetLetterFromChar(c).effect != Letter.Effect.None)
                 {
                     GameManager.i.ImproveLetter(c);
                     affected = true;
@@ -1307,11 +1302,11 @@ public class Bonus : MonoBehaviour, System.ICloneable
     {
         BonusAction res = ScoreWithoutInterface(word);
 
-        isOscillating = res.improvedLetters && withInterface;
+        isOscillating = (res.improvedLetters || res.score != 0) && withInterface;
 
-        if (withInterface && res.improvedLetters && res.score > 0)
+        if (withInterface && res.score != 0)
         {
-            scoreText.text = $"+{res.score}";
+            scoreText.text = Util.ToStringWithPlus(res.score);
 
             LeanTween.move(scoreText.gameObject, scoreTextUp.position, 0.4f).setEaseOutElastic();
         }
@@ -1338,6 +1333,11 @@ public class Bonus : MonoBehaviour, System.ICloneable
     public object Clone()
     {
         return MemberwiseClone();
+    }
+
+    public void RecordPreviousPosition()
+    {
+        previousPos = transform.position;    
     }
 
     public void AnimateFromLastPosition() {

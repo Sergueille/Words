@@ -243,7 +243,7 @@ public class Event : MonoBehaviour
                 data = () => {
                     return new EventInfo {
                         name = $"Lock",
-                        description = $"Gives the Locked effect to the most improved letter. The level of the letter won't change anymore.",
+                        description = $"Gives the Locked effect to the second most improved letter. The level of the letter won't change anymore.",
                         typeID = 12,
                         onCall = () => {
                             GameManager.i.GetNthMostImprovedLetter(2).effect = Letter.Effect.Locked;

@@ -88,6 +88,7 @@ public class Key : MonoBehaviour
             else if (Letter.Level > lastLevel)
             {
                 ParticlesManager.i.CircleParticles(transform.position, 3.0f);
+                // Util.PingText(letterText);
             }
         }
 

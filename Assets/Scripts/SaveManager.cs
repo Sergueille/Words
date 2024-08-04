@@ -106,6 +106,12 @@ public static class SaveManager
         }
     }
 
+    public static void ResetAll()
+    {
+        try { System.IO.File.Delete(GetPath(PROGRESS_SAVE_NAME)); } catch {}
+        try { System.IO.File.Delete(GetPath(RUN_SAVE_NAME)); } catch {}
+    }
+
     private static byte[] GetBytes<T>(T obj)
     {
         int length = Marshal.SizeOf<T>();

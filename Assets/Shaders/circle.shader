@@ -6,7 +6,7 @@ Shader "Unlit/Circle"
     }
     SubShader
     {
-        Tags { "RenderType"="Tansparent" "Queue"="Transparent" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" }
         Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
 
