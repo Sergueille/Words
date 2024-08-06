@@ -26,13 +26,19 @@ public class GameEndManager : MonoBehaviour
     
     public void Do() {
         bestWordText.text = "Searching for the best word...";
+            ColorManager.i.SetTheme("game_over", false); 
 
-        StartCoroutine(GameManager.i.FindBestWord(
-            ColorManager.i.ColorChangedThisFrame,
-            (word, score) => {
+        GameManager.i.isPlaying = false;
+        GameManager.i.progression.startedRun = false;
+        SaveManager.SaveProgression();   
+
+        IEnumerator<object> Coroutine() {
+            yield return new WaitWhile(ColorManager.i.ColorChangedThisFrame);
+            StartCoroutine(GameManager.i.FindBestWord((word, score) => {
                 bestWordText.text = $"The best word for this level was {Util.DecorateArgument(word)} ({Util.DecorateArgument(score)} points)";
-            }
-        ));
+            }));
+        }
+        StartCoroutine(Coroutine());
 
         GameManager.i.continueBtn.gameObject.SetActive(false); // Hide continue button in main menu
 

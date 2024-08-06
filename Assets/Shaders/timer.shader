@@ -57,8 +57,13 @@ Shader "Unlit/Circle"
                 if (dist > 0.5) discard;
 
                 float angle = -atan(centeredUV.x / centeredUV.y);
-                if (angle < 0) angle += 3.14159265359;
-                if (centeredUV.x > 0) angle += 3.14159265359;
+                if (centeredUV.x == 0) {
+                    angle = 3.14159265359;
+                }
+                else {
+                    if (angle < 0) angle += 3.14159265359;
+                    if (centeredUV.x > 0) angle += 3.14159265359;
+                }
 
                 if (angle > _Angle + 2 * 3.14159265359) {
                     return _ColorC;

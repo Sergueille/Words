@@ -99,7 +99,7 @@ public class GameManager : MonoBehaviour
     private bool shownThousandScreen = false;
 
     private int lastSecond;
-    private bool isPlaying; // Is player is a run (not in main menu)?
+    public bool isPlaying; // Is player is a run (not in main menu)?
 
     private void Awake()
     {
@@ -340,7 +340,14 @@ public class GameManager : MonoBehaviour
             int remainingSeconds = Mathf.FloorToInt(fastTime - gi.levelTime);
 
             timerText.text = remainingSeconds.ToString();
-            timerMaterial.SetFloat("_Angle", remainingSeconds * Mathf.PI * 2 / fastTime);
+
+            if (remainingSeconds > 0) {
+                timerMaterial.SetFloat("_Angle", remainingSeconds * Mathf.PI * 2 / fastTime);
+            }
+            else {
+                timerMaterial.SetFloat("_Angle", remainingSeconds * Mathf.PI * 2 / (gameOverTime - fastTime));
+            }
+
             timerMaterial.SetColor("_ColorA", ColorManager.i.GetColor(ColorManager.ThemeColor.BackgroundLighter));
             timerMaterial.SetColor("_ColorB", ColorManager.i.GetColor(ColorManager.ThemeColor.PrimaryDarker));
             timerMaterial.SetColor("_ColorC", ColorManager.i.GetColor(ColorManager.ThemeColor.Secondary));
@@ -516,10 +523,6 @@ public class GameManager : MonoBehaviour
                 else if (gi.levelWords >= wordsPerLevel - 1)
                 {
                     yield return new WaitForSeconds(bigDelay);    
-                    ColorManager.i.SetTheme("game_over", false); 
-                    
-                    progression.startedRun = false;
-                    SaveManager.SaveProgression();   
 
                     GameEndManager.i.Do();
                     yield break;
@@ -961,9 +964,9 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Return the word with the highest score. Will wait until waitPredicate is false
+    /// Return the word with the highest score.
     /// </summary>
-    public IEnumerator<object> FindBestWord(System.Func<bool> waitPredicate, System.Action<string, int> onFind)
+    public IEnumerator<object> FindBestWord(System.Action<string, int> onFind)
     {
         int bestScore = -99999;
         string bestWord = "";
@@ -988,8 +991,6 @@ public class GameManager : MonoBehaviour
             i++;
         }
 
-        yield return new WaitWhile(waitPredicate);
-
         onFind(bestWord, bestScore);
     }
 
@@ -1003,12 +1004,21 @@ public class GameManager : MonoBehaviour
 
         ColorManager.i.SetTheme("menu", false);
 
+        if (isPlaying)
+            SaveManager.SaveRun(gi.state);
+
         PanelsManager.i.CircleTransition(() => {
             PanelsManager.i.SelectPanel("MainMenu", false);
             PanelsManager.i.ToggleGameUI(false);
             isPlaying = false;
         });
     }
+
+    private void OnApplicationQuit() // Unity message, is not called by code
+    {
+        if (isPlaying)
+            SaveManager.SaveRun(gi.state);
+    } 
 
     public int GetMaxBonusCount()
     {
