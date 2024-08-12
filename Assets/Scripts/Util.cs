@@ -84,8 +84,6 @@ public static class Util
                 GameObject.Destroy(copy);
             }
         );
-
-        LeanTweenShake(text.gameObject, 20, 0.3f);
     }
 
     public static T GetRandomWithSpawners<T>(Spawner<T>[] spawns)
@@ -117,8 +115,8 @@ public static class Util
         }
 
         for (int j = exp; j >= 0; j--) {
-            int digit = (i >> (j * 4)) & 15;
-            b.Append((char)(digit + '0'));
+            int digit = (i >> (j * 4)) & 0b1111;
+            b.Append((char)(digit + 'a'));
         }
     } 
 

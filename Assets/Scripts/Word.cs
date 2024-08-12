@@ -72,34 +72,14 @@ public class Letter : System.ICloneable, System.IComparable
     /// <summary>
     /// Get the score the letter will give.
     /// </summary>
-    /// <param name="played">Is the letter played right now? If yes, wWill apply on play effects.</param>
-    public int GetScore(bool played) {
+    public int GetScore() {
         if (effect == Effect.Doubled) {
             return 2 * Level;
         }
         else if (effect == Effect.Tripled) {
             return 3 * Level;
         }
-        else if (effect == Effect.Poisonous) {
-            if (played) {
-                Util.GetRandomElement(GameManager.i.gi.letters).Level--;
-            }
-        }
-        else if (effect == Effect.Doomed) {
-            if (played) {
-                Level--;
-            }
-        }
-        else if (effect == Effect.Burning) {
-            if (played) {
-                Level++;
-            }
-        }
         else if (effect == Effect.Electric) {
-            if (played) {
-                effect = Effect.None;
-            }
-
             return 10 + Level;
         }
         else if (effect == Effect.Polymorphic) {
@@ -107,6 +87,24 @@ public class Letter : System.ICloneable, System.IComparable
         }
         
         return Level;
+    }
+
+    /// <summary>
+    /// Called when letter is played
+    /// </summary>
+    public void OnPlayed() {
+        if (effect == Effect.Poisonous) {
+            Util.GetRandomElement(GameManager.i.gi.letters).Level--;
+        }
+        else if (effect == Effect.Doomed) {
+            Level--;
+        }
+        else if (effect == Effect.Burning) {
+            Level++;
+        }
+        else if (effect == Effect.Electric) {
+            effect = Effect.None;
+        }
     }
 
     public void OnNotPlayed() {

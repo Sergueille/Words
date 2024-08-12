@@ -242,10 +242,10 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 }
             },
             new BonusSpawner {
-                weight = 1.0f,
+                weight = 0.0f,
                 data = () => {
                     return new BonusInfo {
-                        type = BonusType.Constant,
+                        type = BonusType.SuperW,
                     };
                 }
             },
@@ -547,18 +547,22 @@ public class Bonus : MonoBehaviour, System.ICloneable
         else if (info.type == BonusType.Equalizer)
         {
             int least = 100000000;
-            int leastId = 0;
             for (int i = 0; i < word.Length; i++)
             {
                 Letter letter = GameManager.i.GetLetterFromChar(word[i]);
                 if (letter.Level < least)
                 {
                     least = letter.Level;
-                    leastId = i;
                 }
             }
-
-            GameManager.i.ImproveLetter(word[leastId]);
+            
+            for (int i = 0; i < word.Length; i++)
+            {
+                Letter letter = GameManager.i.GetLetterFromChar(word[i]);
+                if (letter.Level == least) {
+                    letter.Level += 1;
+                }
+            }
 
             return new BonusAction {
                 improvedLetters = true,
@@ -651,7 +655,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 int score = 0;
                 foreach (char c in word)
                 {
-                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
+                    score += GameManager.i.GetLetterFromChar(c).GetScore();
                 }
 
                 score /= 2;
@@ -770,7 +774,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
 
             return new BonusAction {
                 improvedLetters = false,
-                score = 6 * worstLetter.GetScore(false),
+                score = 6 * worstLetter.GetScore(),
             };
         }
         else if (info.type == BonusType.BestCopy)
@@ -820,46 +824,10 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 score = 0,
             };
         }
-        else if (info.type == BonusType.Constant)
+        else if (info.type == BonusType.SuperW)
         {
-            int firstLevel = GameManager.i.GetLetterFromChar(word[0]).Level;
-            bool ok = true;
-
-            for (int i = 1; i < word.Length; i++)
-            {
-                if (firstLevel != GameManager.i.GetLetterFromChar(word[i]).Level)
-                {
-                    ok = false;
-                    break;
-                }
-            }
-
-            if (ok)
-            {
-                int score = 0;
-                foreach (char c in word)
-                {
-                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
-                }
-
-                for (int i = 0; i < 5; i++)
-                {
-                    if (word.Length >= i + 1)
-                        GameManager.i.ImproveLetter(word[i]);
-                }
-
-                return new BonusAction {
-                    improvedLetters = true,
-                    score = score,
-                };
-            }
-            else 
-            {                
-                return new BonusAction {
-                    improvedLetters = false,
-                    score = 0,
-                };
-            }
+            //TODO;
+            throw new System.Exception("Unreachable");
         }
         else if (info.type == BonusType.Diversity)
         {
@@ -936,7 +904,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             if (affected) {
                 foreach (char c in word)
                 {
-                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
+                    score += GameManager.i.GetLetterFromChar(c).GetScore();
                 }
             }
 
@@ -989,7 +957,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             if (affected) {
                 foreach (char c in word)
                 {
-                    score += GameManager.i.GetLetterFromChar(c).GetScore(false);
+                    score += GameManager.i.GetLetterFromChar(c).GetScore();
                 }
             }
 
@@ -1097,9 +1065,9 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return "Consonants";
         }
-        else if (info.type == BonusType.Constant)
+        else if (info.type == BonusType.SuperW)
         {
-            return "Constant";
+            return "Super W";
         }
         else if (info.type == BonusType.Diversity)
         {
@@ -1155,11 +1123,11 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.RelativeNumbers)
         {
-            return "Improves letters which level is strictly less than 1. Gives 10 points per level below one for each letter improved.";
+            return "Improves letters which level is strictly less than 1. Gives 10 points per level below 1 for each letter improved.";
         }
         else if (info.type == BonusType.Concentrate)
         {
-            return "Lower the level of the least improved letter in the word, and improves twice the level of the most improved letter in word. (Will choose the leftmost letters first)";
+            return "Lower the level of the least improved letter in the word, and add two points to the most improved letter in word. (Will choose the leftmost letters first)";
         }
         else if (info.type == BonusType.Forbidden)
         {
@@ -1179,7 +1147,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Equalizer)
         {
-            return "Improves the least improved letter in the word (will improve the leftmost if multiple letters).";
+            return "Improves the least improved letters in the word (improves all if multiple letters have the same level).";
         }
         else if (info.type == BonusType.Emergency)
         {
@@ -1211,7 +1179,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.RareLetters)
         {
-            return $"Improves twice the level of every {Util.DecorateArgument('Q')}, {Util.DecorateArgument('J')}, {Util.DecorateArgument('X')} and {Util.DecorateArgument('Z')} in the word, and give 10 points if one is present";
+            return $"Add two points to every {Util.DecorateArgument('Q')}, {Util.DecorateArgument('J')}, {Util.DecorateArgument('X')} and {Util.DecorateArgument('Z')} in the word, and give 10 points if one is present";
         }
         else if (info.type == BonusType.WorstCopy)
         {
@@ -1225,9 +1193,9 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             return $"Improves a random consonant in the word.";
         }
-        else if (info.type == BonusType.Constant)
+        else if (info.type == BonusType.SuperW)
         {
-            return $"If all the letters of the word have the same level, improves the first 5 letters and give as many points the word would give alone.";
+            return $"TODO";
         }
         else if (info.type == BonusType.Diversity)
         {
@@ -1255,7 +1223,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Gap)
         {
-            return $"If there are two identical letters that are two letters away, improves the letter between them by two levels.";
+            return $"If two identical letters are separated by a single letter, improve the letter between them.";
         }
         else if (info.type == BonusType.Change)
         {
@@ -1403,7 +1371,7 @@ public enum BonusType {
     Concentrate,
     RelativeNumbers,
     Charged,
-    Constant,
+    SuperW,
     Diversity,
     Effects,
     LongWord,

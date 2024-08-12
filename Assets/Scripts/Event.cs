@@ -89,7 +89,7 @@ public class Event : MonoBehaviour
                                 break;
                             }
 
-                            i--;
+                            i++;
                         }
                     }
                 }
@@ -422,6 +422,7 @@ public class Event : MonoBehaviour
         }
         else {
             BonusPopup.i.ShowPopup(info.name, info.description, () => {
+                Util.PingText(nameText);
                 info.onCall();
                 Keyboard.i.UpdateAllKeys(true);
                 BonusPopup.i.HidePopup();

@@ -59,7 +59,7 @@ public static class SaveManager
                 acc = 0;
             }
             else {
-                acc = 10 * acc + (GameManager.i.gi.wordUseCounts[pos] - '0');
+                acc = 16 * acc + (GameManager.i.gi.wordUseCounts[pos] - 'a');
             }
         }
 

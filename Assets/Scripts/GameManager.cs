@@ -184,6 +184,9 @@ public class GameManager : MonoBehaviour
                 };
             }
 
+            // Reset stats
+            gi.gameStats = new Stats();
+
             HideError(true);
 
             Keyboard.i.UpdateAllKeys(false);
@@ -206,6 +209,12 @@ public class GameManager : MonoBehaviour
                 Tutorial.i.StartTutorial();
             }
         });
+    }
+
+    // Start run with same mode as previous one
+    public void RestartRun()
+    {
+        GameManager.i.StartNewRun(gi.gameMode);
     }
 
     public void LoadRun()
@@ -535,6 +544,9 @@ public class GameManager : MonoBehaviour
 
                 SaveManager.SaveRun(GameInfo.State.Ingame);
             }
+            else {
+                Util.PingText(errorText);
+            }
 
             submissionAnimation = false;
         }
@@ -721,21 +733,20 @@ public class GameManager : MonoBehaviour
     {
         int total = 0;
 
-        // Get the points from the letters
-        foreach (char c in word)
-        {
-            Letter l = GetLetterFromChar(c);
-            total += l.GetScore(lettersActuallyScore);
-        }
-
-        // Test bonuses
-
         // Create a copy of the letters, so that the modifications can be reverted
         Letter[] lettersCopy = new Letter[26];
         for (int i = 0; i < 26; i++) {
             lettersCopy[i] = gi.letters[i].Clone() as Letter;
         }
 
+        // Get the points from the letters
+        foreach (char c in word)
+        {
+            Letter l = GetLetterFromChar(c);
+            total += l.GetScore();
+        }
+
+        // Trigger bonuses
         foreach (Bonus bonus in bonuses)
         {
             BonusAction a;
@@ -751,6 +762,15 @@ public class GameManager : MonoBehaviour
 
         // Put the old letters back!
         gi.letters = lettersCopy;
+
+        if (lettersActuallyScore) {     
+            // Trigger letters
+            foreach (char c in word)
+            {
+                Letter l = GetLetterFromChar(c);
+                l.OnPlayed();
+            }
+        }
 
         return total;
     }
@@ -814,6 +834,8 @@ public class GameManager : MonoBehaviour
                 bonuses[i].AnimateFromLastPosition();
             }
         });
+
+        UpdatePreviewInterface();
     }
 
     public void ShowBonusPopup(bool visible)
