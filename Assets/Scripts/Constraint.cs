@@ -29,7 +29,7 @@ public struct Constraint
 
         Constraint res = new();
 
-        if (rand < 0.3f) // 0.3
+        if (rand < 0.4f) // 0.4
         {
             res.type = ContraintType.Contains;
             res.stringArg = Util.GetRandomElement(new string[] {
@@ -41,26 +41,26 @@ public struct Constraint
                 "J", "Q", "X"
             });
         }
-        else if (rand < 0.45f) // 0.15
+        else if (rand < 0.52f) // 0.12
         {
             res.type = ContraintType.StatsWith;
             res.stringArg = Util.GetRandomElement(new string[] {
                 "AN", "RE", "UN", "IN", "PA", "PR", "SU", "DE", "DI", "MA", "CA", "CO", "NO",
             });
         }
-        else if (rand < 0.63f) // 0.18
+        else if (rand < 0.67f) // 0.15
         {
             res.type = ContraintType.EndsWith;
             res.stringArg = Util.GetRandomElement(new string[] {
                 "AL", "AN", "ER", "ES", "ED", "RS", "TE", "TY", "US", "IA", "IC", "ON", "ST", "SS", "LE", "LY", "NE", "NT", "NG", 
             });
         }
-        else if (rand < 0.78f) // 0.15
+        else if (rand < 0.82f) // 0.15
         {
             res.type = ContraintType.HasLength;
             res.intArg = Random.Range(9, 11);
         }
-        else  // 0.22
+        else  // 0.18
         {
             res.type = ContraintType.ContainsNot;
             res.stringArg = Util.GetRandomElement(new string[] {

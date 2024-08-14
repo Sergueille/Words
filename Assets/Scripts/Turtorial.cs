@@ -71,7 +71,7 @@ public class Tutorial : MonoBehaviour
     {
         entries = new TutorialEntry[] {
             new TutorialEntry {
-                title = "The tutorial",
+                title = "Welcome!",
                 description = "This tutorial will try to explain how to play this game.",
             },
             new TutorialEntry {
@@ -86,7 +86,7 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Basic rules",
-                description = "Each letter will score 1 (or 2) points. You can see it on the keyboard.",
+                description = "Each letter of the words you enter will score 1 (or 2) points. You can see it on the keyboard.",
                 highlight = Keyboard.i.keyboardParent.gameObject,
             },
             new TutorialEntry {
@@ -110,7 +110,11 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Bonuses",
-                description = "Each bonus has a specific ability. They will allow you to improve your letters or make more points. Click on them to see what they do.",
+                description = "You will keep bonuses for the rest of the game, and they will allow you to improve your letters or make more points.",
+            },
+            new TutorialEntry {
+                title = "Bonuses",
+                description = "Each bonus has a specific ability : click on them to see what they do!",
                 highlight = BonusManager.i.bonusParent.gameObject,
                 predicate = () => BonusPopup.i.isOpen,
                 preventAction = false,
@@ -118,11 +122,11 @@ public class Tutorial : MonoBehaviour
             new TutorialEntry {
                 preventAction = false,
                 hiddenPanel = true,
-                predicate = () => PanelsManager.i.GetCurrentPanelName() == "Main",
+                predicate = () => PanelsManager.i.GetCurrentPanelName() == "Main" && !ColorManager.i.ColorChangedThisFrame(),
             },
             new TutorialEntry {
                 title = "Bonuses",
-                description = "You can have up to 4 bonuses. You can click on them to see their abilities or to remove them.",
+                description = "You can have up to 4 bonuses. At any time, you can click on them to see their abilities again or to remove them. Try clicking it!",
                 highlight = GameManager.i.bonusParent.gameObject,
                 positionDirection = PositionDirection.Down,
                 predicate = () => BonusPopup.i.isFullyOpen,
@@ -130,7 +134,7 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Bonuses",
-                description = "We won't remove it for now.",
+                description = "We won't remove the bonus for now.",
                 highlight = BonusPopup.i.dismissButton.gameObject,
                 positionDirection = PositionDirection.Down,
                 predicate = () => !BonusPopup.i.isOpen,
@@ -138,7 +142,7 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Almost finished",
-                description = "When you complete a level using less than 3 words, each unused word increments this counter.",
+                description = "One last thing: when you complete a level using less than 3 words, each unused word increments this counter.",
                 highlight = GameManager.i.blessingCounter.gameObject,
                 positionDirection = PositionDirection.Down,
             },
@@ -176,11 +180,15 @@ public class Tutorial : MonoBehaviour
         }
         else 
         {
-            TutorialPreventsAction = false;
-            IsTutorialActive = false;
-            popupParent.gameObject.SetActive(false);
-            highlightGraphic.gameObject.SetActive(false);
+            EndTutorial();
         }
+    }
+
+    public void EndTutorial() {
+        TutorialPreventsAction = false;
+        IsTutorialActive = false;
+        popupParent.gameObject.SetActive(false);
+        highlightGraphic.gameObject.SetActive(false);
     }
 
     private void ShowStep(bool immediate)

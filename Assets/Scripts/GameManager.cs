@@ -236,15 +236,6 @@ public class GameManager : MonoBehaviour
 
     public void LevelCompleted()
     {
-        gi.currentLevel++;
-        UpdateLevelText(false);
-
-        // Update best level in progress
-        if (gi.currentLevel > progression.bestLevels.Get((int)gi.gameMode))
-            progression.bestLevels.Set((int)gi.gameMode, gi.currentLevel);
-
-        SaveManager.SaveProgression();
-
         // Show thousand screen
         if (!shownThousandScreen && gi.currentLevel == thousandLevel) {
             shownThousandScreen = true;
@@ -265,6 +256,15 @@ public class GameManager : MonoBehaviour
             EventManager.i.Do(false, LevelCompleted);
             return;
         }
+        
+        gi.currentLevel++;
+        UpdateLevelText(false);
+
+        // Update best level in progress
+        if (gi.currentLevel > progression.bestLevels.Get((int)gi.gameMode))
+            progression.bestLevels.Set((int)gi.gameMode, gi.currentLevel);
+
+        SaveManager.SaveProgression();
 
         if (gi.currentLevel % 2 == 1) {
             BonusManager.i.Do();
@@ -488,7 +488,7 @@ public class GameManager : MonoBehaviour
                     }
                 }
 
-                // Increment word une count
+                // Increment word use count
                 Word.words[inputWord.ToLower()].timesUsed++;
 
                 ClearInput();
@@ -1021,6 +1021,9 @@ public class GameManager : MonoBehaviour
         if (PanelsManager.i.isTransitioning || submissionAnimation) return;
         
         UpdateProgressUI();
+
+        Tutorial.i.EndTutorial();
+        ImprovementManager.i.Cancel();
 
         BonusPopup.i.HidePopup();
 

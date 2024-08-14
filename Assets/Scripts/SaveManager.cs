@@ -42,7 +42,6 @@ public static class SaveManager
         string txt = System.IO.File.ReadAllText(GetPath(RUN_SAVE_NAME));
         GameManager.i.gi = JsonUtility.FromJson<GameInfo>(txt);
 
-        Random.state = GameManager.i.gi.randomState;
         PanelsManager.i.SelectPanel(GameManager.i.gi.currentPanelName, false);
         GameManager.i.CreateBonusUIFromGameInfo();
         GameManager.i.SetBlessingPoints(GameManager.i.gi.blessingPoints, true);
@@ -62,6 +61,8 @@ public static class SaveManager
                 acc = 16 * acc + (GameManager.i.gi.wordUseCounts[pos] - 'a');
             }
         }
+        
+        Random.state = GameManager.i.gi.randomState;
 
         switch (GameManager.i.gi.state) {
             case GameInfo.State.Ingame:

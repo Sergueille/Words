@@ -36,7 +36,7 @@ public class BonusManager : MonoBehaviour
 
             finished = false;
 
-            List<BonusInfo> created = new List<BonusInfo>();
+            List<BonusInfo> excluded = new(GameManager.i.gi.bonuses);
 
             for (int i = 0; i < choiceCount; i++) 
             {
@@ -48,8 +48,8 @@ public class BonusManager : MonoBehaviour
                 };
                 bonus.popupActionText = "Select";
 
-                bonus.Init(CreateNotRedundantBonus(created));
-                created.Add(bonus.info);
+                bonus.Init(CreateNotRedundantBonus(excluded));
+                excluded.Add(bonus.info);
             }
 
             yield return new WaitUntil(() => finished);
@@ -63,7 +63,7 @@ public class BonusManager : MonoBehaviour
             finished = true;
     }
 
-    private BonusInfo CreateNotRedundantBonus(List<BonusInfo> alreadyCreated)
+    private BonusInfo CreateNotRedundantBonus(List<BonusInfo> bonusToExclude)
     {
         while (true) {
             BonusInfo random = Bonus.GetRandomBonus();
@@ -78,7 +78,7 @@ public class BonusManager : MonoBehaviour
                 }
             }
 
-            foreach (BonusInfo b in alreadyCreated)
+            foreach (BonusInfo b in bonusToExclude)
             {
                 if (b.Equals(random))
                 {

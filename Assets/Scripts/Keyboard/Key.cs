@@ -69,6 +69,10 @@ public class Key : MonoBehaviour
         {
             levelText.text = $"{Letter.Level}x2";
         }
+        else if (Letter.effect == Letter.Effect.Tripled)
+        {
+            levelText.text = $"{Letter.Level}x3";
+        }
         else if (Letter.effect == Letter.Effect.Polymorphic)
         {
             levelText.text = $"??";

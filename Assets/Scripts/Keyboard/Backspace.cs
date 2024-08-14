@@ -5,7 +5,34 @@ public class Backspace : MonoBehaviour
 {
     public RectTransform icon;
 
-    public void OnPress() 
+    public float initialHoldDelay;
+    public float holdDelay;
+
+    private float pointerDownTime;
+    private float lastBackspaceTime;
+    private bool pointerDown = false;
+
+    public void OnPointerDown() {
+        pointerDown = true;
+        pointerDownTime = Time.time;
+        lastBackspaceTime = Time.time;
+        TriggerBackspace();
+    }
+
+    public void OnPointerUp() {
+        pointerDown = false;
+    }
+
+    private void Update() {
+        if (pointerDown && Time.time - pointerDownTime > initialHoldDelay) {
+            if (Time.time - lastBackspaceTime > holdDelay) {
+                TriggerBackspace();
+                lastBackspaceTime = Time.time;
+            }
+        }
+    }
+
+    public void TriggerBackspace() 
     {
         LeanTween.cancel(icon.gameObject);
 

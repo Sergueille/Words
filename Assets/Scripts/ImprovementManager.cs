@@ -12,6 +12,8 @@ public class ImprovementManager : MonoBehaviour
     [SerializeField] private GameObject letterPrefab;
 
     private List<char> lettersToImprove;
+
+    private Coroutine doCoroutine;
     
     private void Awake()
     {
@@ -20,7 +22,7 @@ public class ImprovementManager : MonoBehaviour
     
     public void Do()
     {
-        StartCoroutine(Coroutine());
+        doCoroutine = StartCoroutine(Coroutine());
 
         IEnumerator<object> Coroutine() 
         {
@@ -70,6 +72,12 @@ public class ImprovementManager : MonoBehaviour
             Keyboard.i.UpdateAllKeys(true);
 
             GameManager.i.StartNewLevel();
+        }
+    }
+
+    public void Cancel() {
+        if (doCoroutine != null) {
+            StopCoroutine(doCoroutine);
         }
     }
 }

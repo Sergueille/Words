@@ -242,7 +242,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 }
             },
             new BonusSpawner {
-                weight = 0.0f,
+                weight = 1.0f,
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.SuperW,
@@ -826,8 +826,22 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.SuperW)
         {
-            //TODO;
-            throw new System.Exception("Unreachable");
+            bool okay = false;
+            foreach (char c in word) {
+                if (c == 'W') {
+                    okay = true;
+                    break;
+                }
+            }
+
+            if (okay) {
+                GameManager.i.GetLetterFromChar('w').Level += 3;
+            }
+            
+            return new BonusAction {
+                improvedLetters = okay,
+                score = 0,
+            };
         }
         else if (info.type == BonusType.Diversity)
         {
@@ -1067,7 +1081,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.SuperW)
         {
-            return "Super W";
+            return "WWW";
         }
         else if (info.type == BonusType.Diversity)
         {
@@ -1195,7 +1209,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.SuperW)
         {
-            return $"TODO";
+            return $"If the word contains {Util.DecorateArgument('W')}, add 3 points to this letter";
         }
         else if (info.type == BonusType.Diversity)
         {
