@@ -69,18 +69,10 @@ public class BonusManager : MonoBehaviour
             BonusInfo random = Bonus.GetRandomBonus();
 
             bool ok = true;
-            foreach (Bonus b in GameManager.i.bonuses)
-            {
-                if (b.info.Equals(random))
-                {
-                    ok = false;
-                    break;
-                }
-            }
 
             foreach (BonusInfo b in bonusToExclude)
             {
-                if (b.Equals(random))
+                if (b.type == random.type)
                 {
                     ok = false;
                     break;

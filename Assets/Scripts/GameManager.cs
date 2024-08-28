@@ -99,7 +99,9 @@ public class GameManager : MonoBehaviour
     private bool shownThousandScreen = false;
 
     private int lastSecond;
-    public bool isPlaying; // Is player is a run (not in main menu)?
+    [System.NonSerialized] public bool isPlaying; // Is player is a run (not in main menu)?
+
+    public MovementDescrWithAmplitude scoreBumpAnimation;
 
     private void Awake()
     {
@@ -365,6 +367,7 @@ public class GameManager : MonoBehaviour
                 int randLetter = Random.Range(0, 26);
                 gi.letters[randLetter].Level--;
                 Keyboard.i.UpdateAllKeys(true);
+                UpdatePreviewInterface();
             }
 
             if (gi.levelTime > gameOverTime) {
@@ -495,11 +498,17 @@ public class GameManager : MonoBehaviour
                 
                 int steps = System.Math.Min(Mathf.FloorToInt(smallDelay * 30), score);
 
+                float delay = smallDelay / steps;
+
                 for (int i = 0; i < steps; i++) {
                     int s = Mathf.CeilToInt(i / (float)(steps - 1) * score + gi.totalScore);
                     totalScoreText.text = s.ToString();
+                    scoreBumpAnimation.TryCancel();
+                    scoreBumpAnimation.DoReverse(t => {
+                        totalScoreText.transform.localScale = Vector3.one * (1 + t);
+                    });
 
-                    yield return new WaitForSeconds(smallDelay / steps);
+                    yield return new WaitForSeconds(delay);
                 } 
 
                 gi.gameStats.wordCount++;
@@ -526,7 +535,11 @@ public class GameManager : MonoBehaviour
 
                     yield return new WaitForSeconds(bigDelay);
 
-                    LevelCompleted();
+                    // Do not continue if already on game over screen (can happen if timer reach end during animation)
+                    if (isPlaying) {
+                        LevelCompleted();
+                    }
+
                     yield break;
                 }
                 else if (gi.levelWords >= wordsPerLevel - 1)
@@ -827,15 +840,9 @@ public class GameManager : MonoBehaviour
 
         bonuses.Remove(bonus);
         Destroy(bonus.gameObject);
-        LayoutRebuilder.ForceRebuildLayoutImmediate(bonusParent.gameObject.GetComponent<RectTransform>());
+        //LayoutRebuilder.ForceRebuildLayoutImmediate(bonusParent.gameObject.GetComponent<RectTransform>());
 
-        Util.DoNextFrame(gameObject, () => {
-            for (int i = 0; i < bonuses.Count; i++) {
-                bonuses[i].AnimateFromLastPosition();
-            }
-        });
-
-        UpdatePreviewInterface();
+        // UpdatePreviewInterface();
     }
 
     public void ShowBonusPopup(bool visible)

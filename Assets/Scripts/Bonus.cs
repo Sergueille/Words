@@ -317,7 +317,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 }
             },
             new BonusSpawner {
-                weight = 0.9f,
+                weight = GameManager.i.gi.gameMode == GameMode.Demanding || GameManager.i.gi.gameMode == GameMode.Insane ? 0.0f : 0.9f,
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.NoChange,
@@ -1129,123 +1129,123 @@ public class Bonus : MonoBehaviour, System.ICloneable
     {
         if (info.type == BonusType.TwoLetters)
         {
-            return $"Each time {Util.DecorateArgument(info.stringArg)} appears in a word, improves these letters by one level.";
+            return $"Each time {Util.DecorateArgument(info.stringArg)} appears in a word, adds 1 point to each of these letters.";
         }
         else if (info.type == BonusType.Charged)
         {
-            return $"Gives the Electric effect to letters located after every {Util.DecorateArgument(info.stringArg)}. The next time they are played, Electric letters will loose their effect and give 10 additional points.";
+            return $"Gives the Electric effect to letters located after every {Util.DecorateArgument(info.stringArg)}. The next time they are played, Electric letters will lose their effect but grant 10 additional points.";
         }
         else if (info.type == BonusType.RelativeNumbers)
         {
-            return "Improves letters which level is strictly less than 1. Gives 10 points per level below 1 for each letter improved.";
+            return "Improves letters whose score is strictly less than 1, and also scores 10 points for each letter point below 1.";
         }
         else if (info.type == BonusType.Concentrate)
         {
-            return "Lower the level of the least improved letter in the word, and add two points to the most improved letter in word. (Will choose the leftmost letters first)";
+            return "Subtracts 1 point from the least improved letter in the word and adds 2 points to the most improved letter in the word (starting with the leftmost letters first).";
         }
         else if (info.type == BonusType.Forbidden)
         {
-            return $"Improves {Util.DecorateArgument(info.stringArg)} by two levels. If the word contain this letter, -500 points.";
+            return $"Adds 2 points to {Util.DecorateArgument(info.stringArg)}. If the word contains this letter, scores -500 points.";
         }
         else if (info.type == BonusType.Everywhere)
         {
-            return $"Improves every {Util.DecorateArgument(info.stringArg)} in the word. If the word doesn't contain any, -500 points.";
+            return $"Adds 1 point to every {Util.DecorateArgument(info.stringArg)} in the word. If the word doesn't contain any, scores -500 points.";
         }
         else if (info.type == BonusType.OOO)
         {
-            return $"Improves the letters located directly after an {Util.DecorateArgument("O")}.";
+            return $"Adds 1 point to any letter directly following an {Util.DecorateArgument("O")}.";
         }
         else if (info.type == BonusType.Palindrome)
         {
-            return "If the first letter and the last letter of the word are identical, improves this letter and gives 15 points.";
+            return "If the first and last letters of the word are identical, adds 1 point to this letter and scores 15 points.";
         }
         else if (info.type == BonusType.Equalizer)
         {
-            return "Improves the least improved letters in the word (improves all if multiple letters have the same level).";
+            return "Adds 1 point to the least improved letters in the word (applies to all if multiple letters have the same score).";
         }
         else if (info.type == BonusType.Emergency)
         {
-            return $"If the word contains {Util.DecorateArgument(info.stringArg)} and the level of the letter is even, improves its level by 3 and gives 30 points.";
+            return $"If the word contains {Util.DecorateArgument(info.stringArg)} and the score of the letter is even, adds 3 points to the letter and scores 30 points.";
         }
         else if (info.type == BonusType.FrequentVowel)
         {
-            return $"Looks for the vowel that appeared the most in the word, then adds 6 points per time it appeared.";
+            return $"Finds the most frequent vowel in the word and scores 6 points for each occurrence.";
         }
         else if (info.type == BonusType.Triple)
         {
-            return $"If the word contains three identical letters, improve the level of the letter.";
+            return $"If the word contains three identical letters, adds 1 point to the letter.";
         }
         else if (info.type == BonusType.Length)
         {
-            return $"If the word is exactly {info.intArg} letters long, gives half the points of the word (not counting other bonuses).";
+            return $"If the word is exactly {info.intArg} letters long, scores half the word's points (excluding other bonuses).";
         }
         else if (info.type == BonusType.Initial)
         {
-            return "Improves the first letter of the word.";
+            return "Adds 1 point to the first letter of the word.";
         }
         else if (info.type == BonusType.Double)
         {
-            return "If the word contains two identical adjacent letters, improve the level of the letter.";
+            return "If the word contains two identical adjacent letters, adds 1 point to the letter.";
         }
         else if (info.type == BonusType.ShortWord)
         {
-            return "If the word is 4 letters long, improves the 4 letters.";
+            return "If the word is 4 letters long, adds 1 point to each of the 4 letters.";
         }
         else if (info.type == BonusType.RareLetters)
         {
-            return $"Add two points to every {Util.DecorateArgument('Q')}, {Util.DecorateArgument('J')}, {Util.DecorateArgument('X')} and {Util.DecorateArgument('Z')} in the word, and give 10 points if one is present";
+            return $"Adds 2 points to each {Util.DecorateArgument('Q')}, {Util.DecorateArgument('J')}, {Util.DecorateArgument('X')} and {Util.DecorateArgument('Z')} in the word, and scores 10 points if any are present.";
         }
         else if (info.type == BonusType.WorstCopy)
         {
-            return "Looks for the least improved letter in the word, then adds 6 times the points it would give to the score.";
+            return "Finds the least improved letter in the word, then scores 6 times the points it would score.";
         }
         else if (info.type == BonusType.BestCopy)
         {
-            return "Looks for the most improved letter in the word, then adds its level to the score.";
+            return "Finds the most improved letter in the word, then scores its points.";
         }
         else if (info.type == BonusType.Consonants)
         {
-            return $"Improves a random consonant in the word.";
+            return $"Adds 1 point to a random consonant in the word.";
         }
         else if (info.type == BonusType.SuperW)
         {
-            return $"If the word contains {Util.DecorateArgument('W')}, add 3 points to this letter";
+            return $"If the word contains {Util.DecorateArgument('W')}, adds 3 points to that letter.";
         }
         else if (info.type == BonusType.Diversity)
         {
-            return "If all the letters of the word are different, improves all the consonants of the word.";
+            return "If all the letters of the word are different, adds 1 point to each consonant.";
         }
         else if (info.type == BonusType.Effects)
         {
-            return "Improves all letters with an effect in the word.";
+            return "Adds 1 point to all letters with an effect in the word.";
         }
         else if (info.type == BonusType.LongWord)
         {
-            return "Allows you to write words up to 16 letters long.";
+            return "Allows words up to 16 letters long.";
         }
         else if (info.type == BonusType.Sacrifice)
         {
-            return "Gives 40 points, but the first letter of the word becomes Doomed. Doomed letters will loose one level every time they score.";
+            return "Scores 40 points, but the first letter of the word becomes Doomed. Doomed letters will lose one point each time they score.";
         }
         else if (info.type == BonusType.LastMinute)
         {
-            return "When submitting the last word of a level, give half the points the word would give alone.";
+            return "When submitting the last word of a level, scores half the points the word would normally give.";
         }
         else if (info.type == BonusType.Absorbent)
         {
-            return $"Improves each {Util.DecorateArgument(info.stringArg)} by 3 levels, but decreases the level of the letters directly after or before an {Util.DecorateArgument(info.stringArg)}.";
+            return $"Adds 3 points to each {Util.DecorateArgument(info.stringArg)}, but subtracts 1 point from the letters directly adjacent to it";
         }
         else if (info.type == BonusType.Gap)
         {
-            return $"If two identical letters are separated by a single letter, improve the letter between them.";
+            return $"If two identical letters are separated by a single letter, adds 1 point to the letter between them.";
         }
         else if (info.type == BonusType.Change)
         {
-            return $"If the word was never used before, give half the points the word would give alone.";
+            return $"If the word was never used before, scores half the points the word would normally give.";
         }
         else if (info.type == BonusType.NoChange)
         {
-            return $"Give 10 points per time the word was used before.";
+            return $"Scores 10 points for each time the word was previously used.";
         }
         else
         {
@@ -1256,7 +1256,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
     public void OnClick()
     {
         if (unknown) {
-            BonusPopup.i.ShowPopup("???", "You haven't discovered this. Take this bonus once to discover it.", popupAction, popupActionText);
+            BonusPopup.i.ShowPopup("???", "You haven't discovered this. Take this bonus at least once to discover it.", popupAction, popupActionText);
         }
         else {
             BonusPopup.i.ShowPopup(GetName(), GetDescription(), popupAction, popupActionText);

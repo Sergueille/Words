@@ -72,7 +72,7 @@ public class Tutorial : MonoBehaviour
         entries = new TutorialEntry[] {
             new TutorialEntry {
                 title = "Welcome!",
-                description = "This tutorial will try to explain how to play this game.",
+                description = "This tutorial will guide you through the basics of playing the game.",
             },
             new TutorialEntry {
                 title = "Basic rules",
@@ -81,23 +81,23 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Basic rules",
-                description = "To do that, you can enter 3 words.",
+                description = "To achieve this, you can enter up to 3 words.",
                 highlight = GameManager.i.wordsCounter.gameObject,
             },
             new TutorialEntry {
                 title = "Basic rules",
-                description = "Each letter of the words you enter will score 1 (or 2) points. You can see it on the keyboard.",
+                description = "Each letter in the words you enter will score 1 (or 2) points. You can track this on the keyboard.",
                 highlight = Keyboard.i.keyboardParent.gameObject,
             },
             new TutorialEntry {
                 title = "Basic rules",
-                description = "You can type any word, but it must satisfy a constraint, shown here.",
+                description = "You can type any word, but it must meet the constraint shown here.",
                 highlight = GameManager.i.constraintText.gameObject,
                 positionDirection = PositionDirection.Down,
             },
             new TutorialEntry {
                 title = "First level",
-                description = "Now, try to beat the first level. Try to use long words to make more points!",
+                description = "Now, try to beat the first level. Use long words to score more points!",
             },
             new TutorialEntry {
                 preventAction = false,
@@ -106,15 +106,15 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Great!",
-                description = "You completed the first level! You can now choose a bonus!",
+                description = "Great job! You've completed the first level. Now you can choose a bonus!",
             },
             new TutorialEntry {
                 title = "Bonuses",
-                description = "You will keep bonuses for the rest of the game, and they will allow you to improve your letters or make more points.",
+                description = "Bonuses remain with you for the rest of the game, allowing you to improve your letters or score more points",
             },
             new TutorialEntry {
                 title = "Bonuses",
-                description = "Each bonus has a specific ability : click on them to see what they do!",
+                description = "Each bonus has a specific ability. Click on them to see what they do!",
                 highlight = BonusManager.i.bonusParent.gameObject,
                 predicate = () => BonusPopup.i.isOpen,
                 preventAction = false,
@@ -126,7 +126,7 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Bonuses",
-                description = "You can have up to 4 bonuses. At any time, you can click on them to see their abilities again or to remove them. Try clicking it!",
+                description = "You can have up to 4 bonuses. Click on them anytime to review their abilities or remove them. Give it a try!",
                 highlight = GameManager.i.bonusParent.gameObject,
                 positionDirection = PositionDirection.Down,
                 predicate = () => BonusPopup.i.isFullyOpen,
@@ -134,7 +134,7 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Bonuses",
-                description = "We won't remove the bonus for now.",
+                description = "We won't remove the bonus just yet.",
                 highlight = BonusPopup.i.dismissButton.gameObject,
                 positionDirection = PositionDirection.Down,
                 predicate = () => !BonusPopup.i.isOpen,
@@ -142,19 +142,19 @@ public class Tutorial : MonoBehaviour
             },
             new TutorialEntry {
                 title = "Almost finished",
-                description = "One last thing: when you complete a level using less than 3 words, each unused word increments this counter.",
+                description = "One last thing: completing a level using fewer than 3 words increases this counter for each unused word.",
                 highlight = GameManager.i.blessingCounter.gameObject,
                 positionDirection = PositionDirection.Down,
             },
             new TutorialEntry {
                 title = "Almost finished",
-                description = "If it's full, there will be a surprise!",
+                description = "When it's full, expect a surprise!",
                 highlight = GameManager.i.blessingCounter.gameObject,
                 positionDirection = PositionDirection.Down,
             },
             new TutorialEntry {
                 title = "Almost finished",
-                description = "The required score each level will grow exponentially. Your objective is 1000 points. Good luck!",
+                description = "The required score for each level will increase exponentially. Your goal is to reach 1000 points. Good luck!",
             },
         };
 

@@ -46,7 +46,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Vowel decrementation",
-                    description = "Decrement the level of every vowel.",
+                    description = "Removes one point from every vowel.",
                     typeID = 0,
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
@@ -61,7 +61,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Consonant decrementation",
-                    description = "Decrement the level of every consonant.",
+                    description = "Removes one point from every consonant.",
                     typeID = 1,
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
@@ -76,7 +76,7 @@ public class Event : MonoBehaviour
                 weight = 1.5f,
                 data = () => new EventInfo {
                     name = "Poisoning",
-                    description = "Give the Poisonous effect to the most improved letter with no effect. Each time the letter scores, a random letter looses a level.",
+                    description = "Gives the Poisonous effect to the most improved letter with no effect. Each time the letter scores, a random letter loses a point.",
                     typeID = 2,
                     onCall = () => {
                         int i = 1;
@@ -98,7 +98,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Doom",
-                    description = "Give the Doomed effect to the third most improved letter. Each time the letter scores, it looses a level.",
+                    description = "Gives the Doomed effect to the third most improved letter. Each time the letter scores, it loses a point.",
                     typeID = 3,
                     onCall = () => {
                         GameManager.i.GetNthMostImprovedLetter(3).effect = Letter.Effect.Doomed; 
@@ -109,7 +109,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Shuffle",
-                    description = "Level of the letters are shuffled (most improved letters will receive the lowest levels).",
+                    description = "The points of the letters are shuffled, causing the most improved letters to receive the lowest points.",
                     typeID = 4,
                     onCall = () => {
                         for (int i = 0; i < 13; i++) {
@@ -127,7 +127,7 @@ public class Event : MonoBehaviour
                 weight = 1.5f,
                 data = () => new EventInfo {
                     name = "Tax",
-                    description = "The most improved letter level will be multiplied by 0.7 (rounded down).",
+                    description = "The score of the letter with the highest score will be multiplied by 0.7 (rounded down).",
                     typeID = 5,
                     onCall = () => {
                         Letter l = GameManager.i.GetNthMostImprovedLetter(1);
@@ -139,7 +139,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Average",
-                    description = "Computes the average level of all letters (rounded down), then each letter will have this level.",
+                    description = "Computes the average score of all letters (rounded down), then gives this score to every letter.",
                     typeID = 6,
                     onCall = () => {
                         int sum = 0;
@@ -195,7 +195,7 @@ public class Event : MonoBehaviour
                     char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T', 'I', 'A' });
                     return new EventInfo {
                         name = $"Doomed {letter}",
-                        description = $"Gives the Doomed effect to {Util.DecorateArgument(letter)}. Each time the letter scores, it looses a level",
+                        description = $"Gives the Doomed effect to {Util.DecorateArgument(letter)}. Each time the letter scores, it loses a point.",
                         typeID = 9,
                         onCall = () => {
                             GameManager.i.GetLetterFromChar(letter).effect = Letter.Effect.Doomed;
@@ -209,7 +209,7 @@ public class Event : MonoBehaviour
                     char letter = Util.GetRandomElement(new char[] { 'E', 'S', 'T' });
                     return new EventInfo {
                         name = $"Locked {letter}",
-                        description = $"Gives the Locked effect to {Util.DecorateArgument(letter)}. The level of the letter won't change anymore.",
+                        description = $"Gives the Locked effect to {Util.DecorateArgument(letter)}. The points of the letter will no longer change.",
                         typeID = 10,
                         onCall = () => {
                             GameManager.i.GetLetterFromChar(letter).effect = Letter.Effect.Locked;
@@ -222,7 +222,7 @@ public class Event : MonoBehaviour
                 data = () => {
                     return new EventInfo {
                         name = $"Randomization",
-                        description = $"Removes all bonuses, and give 3 random bonuses.",
+                        description = $"Removes all bonuses, and gives 3 random bonuses.",
                         typeID = 11,
                         onCall = () => {
                             while (GameManager.i.bonuses.Count > 0) {
@@ -243,7 +243,7 @@ public class Event : MonoBehaviour
                 data = () => {
                     return new EventInfo {
                         name = $"Lock",
-                        description = $"Gives the Locked effect to the second most improved letter. The level of the letter won't change anymore.",
+                        description = $"Gives the Locked effect to the second most improved letter. The points of the letter will no longer change.",
                         typeID = 12,
                         onCall = () => {
                             GameManager.i.GetNthMostImprovedLetter(2).effect = Letter.Effect.Locked;
@@ -271,7 +271,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Incrementation",
-                    description = "Improves every letter by one level.",
+                    description = "Adds 1 point to every letter.",
                     typeID = 1,
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
@@ -284,7 +284,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Vowel incrementation",
-                    description = "Improves every vowel by 5 levels.",
+                    description = "Adds 5 points to every vowel.",
                     typeID = 2,
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
@@ -300,7 +300,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Multiplication",
-                    description = "Multiplies the level of the most improved letter by 1.4 (rounded up)",
+                    description = "Multiplies the score of the letter with the highest score by 1.4 (rounded up)",
                     typeID = 3,
                     onCall = () => {
                         Letter l = GameManager.i.GetNthMostImprovedLetter(1);
@@ -312,7 +312,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Cleaning",
-                    description = "Removes every negative effect, and letters with level that is less than 3 will have level 3.",
+                    description = "Removes every negative effect, and ensures that letters have a score of at least 3 points.",
                     typeID = 4,
                     onCall = () => {
                         for (char a = 'a'; a <= 'z'; a++) {
@@ -333,7 +333,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Burn",
-                    description = "Gives the Burning effect to the second most improved letter. The letter will gain a level when used, but will loose 1 if not used in a word.",
+                    description = "Gives the Burning effect to the second most improved letter. The letter will gain 1 point when used, but will lose 1 if not used in a word.",
                     typeID = 5,
                     onCall = () => {
                         GameManager.i.GetNthMostImprovedLetter(2).effect = Letter.Effect.Burning; 
@@ -344,7 +344,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Left copy",
-                    description = "Gives a copy of the leftmost bonus, if enough place.",
+                    description = "Gives a copy of the leftmost bonus, if there is enough space.",
                     typeID = 6,
                     onCall = () => {
                         if (GameManager.i.bonuses.Count > 0) {
@@ -357,7 +357,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Right copy",
-                    description = "Gives a copy of the rightmost bonus, if enough place.",
+                    description = "Gives a copy of the rightmost bonus, if there is enough space.",
                     typeID = 7,
                     onCall = () => {
                         if (GameManager.i.bonuses.Count > 0) {
@@ -370,7 +370,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Luck",
-                    description = "Take two random blessing (including this blessing).",
+                    description = "Receive two random blessings.",
                     typeID = 8,
                     onCall = () => {
                         GetRandomBlessing().onCall();
@@ -382,7 +382,7 @@ public class Event : MonoBehaviour
                 weight = 1.0f,
                 data = () => new EventInfo {
                     name = "Time travel",
-                    description = "Go back 2 levels before without loosing anything, so scores will be lower for some time (Random elements will be different)",
+                    description = "Go back 2 levels earlier without losing your letters and bonuses, but random things will be different.",
                     typeID = 9,
                     onCall = () => {
                         GameManager.i.gi.currentLevel -= 2;

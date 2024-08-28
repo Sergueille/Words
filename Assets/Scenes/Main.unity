@@ -13142,7 +13142,10 @@ MonoBehaviour:
   smallDelay: 0.7
   bigDelay: 1.2
   confettis: {fileID: 88456395}
-  isPlaying: 0
+  scoreBumpAnimation:
+    duration: 0.1
+    easeType: 9
+    amplitude: 0.4
 --- !u!4 &440948666
 Transform:
   m_ObjectHideFlags: 0
@@ -15981,7 +15984,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Increase the level of two of these letters:'
+  m_text: 'Add one point to two of these letters:'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b9e3366c48a0c8946ab37a6bf7857e2f, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 7b9b2c1838b524081a9e3633495617c7, type: 2}
@@ -22236,13 +22239,13 @@ MonoBehaviour:
   - Insane
   descriptions:
   - The game will explain how to play
-  - Everything is normal, with moderated difficulty
+  - Standard way to play, with moderated difficulty
   - You can't use twice the same word during the whole game
   - You can have up to 5 bonuses, but the required scores will be higher and you
     have to reach 1500 points to complete this mode
   - You have 60s for each level. Each second past this time, a random letter looses
-    a level (up to 80s)
-  - All modes enabled!
+    a point (up to 80s)
+  - All previous difficulties enabled!
   UIPanel: {fileID: 714603656}
   transition:
     duration: 0.4
