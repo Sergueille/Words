@@ -274,7 +274,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
                 }
             },
             new BonusSpawner {
-                weight = 0.7f,
+                weight = 0.75f,
                 data = () => {
                     return new BonusInfo {
                         type = BonusType.Sacrifice,
@@ -361,7 +361,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
             new BonusSpawner {
                 weight = 0.8f,
                 data = () => {
-                    char letter = Util.GetRandomElement(new char[] { 'S', 'T', 'E', 'A' });
+                    char letter = Util.GetRandomElement(new char[] { 'P', 'D', 'M' });
 
                     return new BonusInfo {
                         type = BonusType.Emergency,
@@ -573,26 +573,38 @@ public class Bonus : MonoBehaviour, System.ICloneable
         {
             Letter l = GameManager.i.GetLetterFromChar(info.stringArg[0]);
 
+            bool contains = false;
+
             foreach (char c in word)
             {   
                 if (GameManager.i.AreCharsEqual(c, info.stringArg[0]))
                 {
-                    if (l.Level % 2 == 0)
-                    {
-                        GameManager.i.ImproveLetter(info.stringArg[0]);
-                        GameManager.i.ImproveLetter(info.stringArg[0]);
-                        GameManager.i.ImproveLetter(info.stringArg[0]);
-
-                        return new BonusAction {
-                            improvedLetters = true,
-                            score = 30,
-                        };
-                    }
+                    contains = true;
                 }
             }
 
-            return new BonusAction {
-                improvedLetters = false,
+            if (contains)
+            {
+                if (l.Level >= 5)
+                {
+                    l.Level -= 5;
+                    foreach (char cc in word)
+                    {
+                        if (!GameManager.i.AreCharsEqual(cc, info.stringArg[0]))
+                        {
+                            GameManager.i.GetLetterFromChar(cc).Level += 1;
+                        }
+                    }
+                }
+                else
+                {
+                    l.Level += 3;
+                }
+            }
+
+            return new BonusAction
+            {
+                improvedLetters = contains,
                 score = 0,
             };
         }
@@ -606,17 +618,19 @@ public class Bonus : MonoBehaviour, System.ICloneable
             }
 
             int best = 0;
+            int bestScore = 0;
             for (int i = 0; i < 26; i++)
             {
-                if (Util.IsVowel((char)(i + 'A')) && best < counts[i])
+                if ((char)(i + 'A') != 'E' && (char)(i + 'A') != 'S' && best < counts[i])
                 {
                     best = counts[i];
+                    bestScore = GameManager.i.GetLetterFromChar((char)(i + 'A')).Level;
                 }
             }
 
             return new BonusAction {
                 improvedLetters = false,
-                score = 6 * best,
+                score = bestScore * best,
             };
         }
         else if (info.type == BonusType.Triple)
@@ -902,11 +916,18 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Sacrifice)
         {
-            GameManager.i.GetLetterFromChar(word[0]).effect = Letter.Effect.Doomed;
+            int score = 0;
+
+            foreach (char c in word)
+            {
+                score += GameManager.i.GetLetterFromChar(c).GetScore();
+            }
+
+            GameManager.i.GetLetterFromChar(word[0]).Level -= (int)Mathf.Ceil(score / 10.0f);
 
             return new BonusAction {
                 improvedLetters = true,
-                score = 40,
+                score = score,
             };
         }
         else if (info.type == BonusType.LastMinute)
@@ -1041,7 +1062,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.FrequentVowel)
         {
-            return "Frequent vowel";
+            return "Frequent letter";
         }
         else if (info.type == BonusType.Triple)
         {
@@ -1165,11 +1186,11 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Emergency)
         {
-            return $"If the word contains {Util.DecorateArgument(info.stringArg)} and the score of the letter is even, adds 3 points to the letter and scores 30 points.";
+            return $"If the word contains {Util.DecorateArgument(info.stringArg)}, and its score is at least 5, improve every other letter in the word and {Util.DecorateArgument(info.stringArg)} looses 5 points. If its score is less than 5, add 3 points to {Util.DecorateArgument(info.stringArg)}";
         }
         else if (info.type == BonusType.FrequentVowel)
         {
-            return $"Finds the most frequent vowel in the word and scores 6 points for each occurrence.";
+            return $"Finds the most frequent letter in the word and scores its points for each occurrence. Doesn't work for {Util.DecorateArgument("E")} and {Util.DecorateArgument("S")}.";
         }
         else if (info.type == BonusType.Triple)
         {
@@ -1225,7 +1246,7 @@ public class Bonus : MonoBehaviour, System.ICloneable
         }
         else if (info.type == BonusType.Sacrifice)
         {
-            return "Scores 40 points, but the first letter of the word becomes Doomed. Doomed letters will lose one point each time they score.";
+            return "Score the points the word would give alone, but the first letter of the word looses a tenth of the points given (rounded up).";
         }
         else if (info.type == BonusType.LastMinute)
         {

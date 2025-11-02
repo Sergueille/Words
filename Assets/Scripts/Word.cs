@@ -114,8 +114,11 @@ public class Letter : System.ICloneable, System.IComparable
     }
 
     public bool HasNegativeEffect() {
-        return effect switch {
-            Effect.Poisonous | Effect.Doomed | Effect.Locked => true,
+        return effect switch
+        {
+            Effect.Poisonous => true,
+            Effect.Doomed => true,
+            Effect.Locked => true,
             _ => false
         };
     }
